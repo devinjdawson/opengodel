@@ -13,7 +13,7 @@ class VectorService:
     def __init__(self):
         self._local_model: SentenceTransformer | None = None
         self._openai_client: openai.AsyncOpenAI | None = None
-        self._use_openai = bool(settings.openai_api_key)
+        self._embedding_client: openai.AsyncOpenAI | None = None
 
     def _get_local_model(self) -> SentenceTransformer:
         if self._local_model is None:
@@ -22,16 +22,42 @@ class VectorService:
 
     def _get_openai_client(self) -> openai.AsyncOpenAI:
         if self._openai_client is None:
-            self._openai_client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
+            api_key = (
+                settings.inference_api_key
+                or settings.openai_api_key
+            )
+            base_url = settings.inference_base_url
+            self._openai_client = openai.AsyncOpenAI(
+                api_key=api_key,
+                base_url=base_url,
+            )
         return self._openai_client
 
+    def _get_embedding_client(self) -> openai.AsyncOpenAI:
+        if self._embedding_client is None:
+            api_key = (
+                settings.embedding_api_key
+                or settings.inference_api_key
+                or settings.openai_api_key
+            )
+            base_url = settings.embedding_base_url or settings.inference_base_url
+            self._embedding_client = openai.AsyncOpenAI(
+                api_key=api_key,
+                base_url=base_url,
+            )
+        return self._embedding_client
+
+    def _should_use_openai(self) -> bool:
+        provider = settings.embedding_provider.lower()
+        return provider in ("openai", "azure", "openrouter", "ollama", "deepseek", "groq", "together", "fireworks", "cohere", "voyage", "jina", "mixedbread")
+
     async def generate_embedding(self, text: str) -> list[float]:
-        if self._use_openai:
-            return await self._generate_openai_embedding(text)
+        if self._should_use_openai():
+            return await self._generate_openai_compatible_embedding(text)
         return await self._generate_local_embedding(text)
 
-    async def _generate_openai_embedding(self, text: str) -> list[float]:
-        client = self._get_openai_client()
+    async def _generate_openai_compatible_embedding(self, text: str) -> list[float]:
+        client = self._get_embedding_client()
         response = await client.embeddings.create(
             model=settings.embedding_model,
             input=text,

@@ -5,7 +5,7 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 
-from app.api.v1 import equity, news
+from app.api.v1 import equity, news, ai
 from app.core.config import settings
 from app.core.database import close_db, init_db
 from app.services.scheduler import shutdown_scheduler, start_scheduler
@@ -44,6 +44,7 @@ app.add_middleware(
 
 app.include_router(equity.router)
 app.include_router(news.router)
+app.include_router(ai.router)
 
 
 @app.get("/health")
