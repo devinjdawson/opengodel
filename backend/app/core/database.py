@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.pool import NullPool
+from sqlalchemy import text
 from sqlmodel import SQLModel
 
 from app.core.config import settings
@@ -35,9 +36,7 @@ async def get_db() -> AsyncSession:
 async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
-        await conn.execute(
-            "CREATE EXTENSION IF NOT EXISTS vector;"
-        )
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
 
 
 async def close_db() -> None:

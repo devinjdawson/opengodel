@@ -1,0 +1,156 @@
+/* Shared "Get a demo" modal — sourced from index.html.
+   Include with <script src="demo-modal.js"></script> and it will wire
+   itself to any clickable element with id fc-nav-get-demo, fc-mm-demo,
+   or any <a href="…#demo">. Auto-opens on #demo hash. */
+(function () {
+  function init() {
+    if (document.getElementById("fc-demo-overlay")) return;
+
+    /* Fonts (idempotent) */
+    if (!document.querySelector('link[href*="Oxygen+Mono"]')) {
+      var fl = document.createElement("link");
+      fl.rel = "stylesheet";
+      fl.href = "https://fonts.googleapis.com/css2?family=Oxygen+Mono&family=Sofia+Sans+Semi+Condensed:wght@300;400;700&family=Inter:wght@300;400;500&display=swap";
+      document.head.appendChild(fl);
+    }
+
+    /* HubSpot form v2 */
+    if (!document.querySelector('script[src*="js.hsforms.net/forms/v2.js"]')) {
+      var hs = document.createElement("script");
+      hs.src = "https://js.hsforms.net/forms/v2.js";
+      hs.onload = function () {
+        if (!window.hbspt) return;
+        hbspt.forms.create({
+          region: "na1",
+          portalId: "45198047",
+          formId: "7a5a0b9b-d4fc-4ffd-8d5d-d1d853c40a5b",
+          target: "#fc-dm-hs-wrap",
+          css: [
+            "body,form,.hbspt-form,.hs-form{background:#111!important;color:#eaeaea!important}",
+            "label,.hs-field-desc{font-family:'Oxygen Mono',monospace!important;font-size:10px!important;letter-spacing:1.5px!important;color:rgba(255,255,255,.35)!important;text-transform:uppercase!important;display:block!important;margin-bottom:5px!important}",
+            "input[type=text],input[type=email],input[type=tel],select,textarea{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:8px!important;padding:10px 12px!important;font-size:15px!important;color:#eaeaea!important;width:100%!important;box-sizing:border-box!important;font-family:'Sofia Sans Semi Condensed',system-ui,sans-serif!important}",
+            "input[type=text]:focus,input[type=email]:focus,input[type=tel]:focus,select:focus,textarea:focus{border-color:rgba(51,226,154,.4)!important;outline:none!important}",
+            "input[type=submit],.hs-button{background:#33E29A!important;color:#0a0a0a!important;border:none!important;border-radius:9px!important;padding:13px 20px!important;font-family:'Oxygen Mono',monospace!important;font-size:12px!important;letter-spacing:1px!important;font-weight:700!important;width:100%!important;cursor:pointer!important;margin-top:6px!important}",
+            "input[type=submit]:hover,.hs-button:hover{background:#4debb0!important}",
+            "fieldset{max-width:100%!important;border:none!important;padding:0!important;margin:0 0 14px!important}",
+            ".hbspt-form,.hs-form-private,.hsfc-Form{border:none!important;box-shadow:none!important}",
+            ".hs-richtext{display:none!important}",
+            ".hs-error-msgs,.hs-error-msg{color:#ff6b6b!important;list-style:none!important;padding:0!important;margin:4px 0 0!important}",
+            ".submitted-message{color:#33E29A!important;font-family:'Oxygen Mono',monospace!important;font-size:14px!important;text-align:center!important;padding:20px 0!important}",
+            ".grecaptcha-badge{filter:invert(1) brightness(.6)!important}"
+          ].join("")
+        });
+      };
+      document.body.prepend(hs);
+    }
+
+    /* Modal styles */
+    var style = document.createElement("style");
+    style.textContent = [
+      "#fc-demo-overlay{position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;z-index:999999!important;background:rgba(0,0,0,.75);display:flex!important;align-items:center!important;justify-content:center!important;padding:10px;box-sizing:border-box;margin:0!important;opacity:0;pointer-events:none;transition:opacity .18s ease}",
+      "#fc-demo-overlay.is-open{opacity:1!important;pointer-events:auto!important}",
+      "#fc-demo-modal{width:100%;max-width:980px;height:auto;max-height:94vh;background:radial-gradient(ellipse at 0% 100%,rgba(68,196,143,.15) 0%,transparent 50%),#000;border:1px solid rgba(51,226,154,.18);border-radius:18px;position:relative;box-shadow:0 32px 80px rgba(0,0,0,.8);display:flex;flex-direction:column;overflow:hidden}",
+      "#fc-demo-close{position:absolute;top:14px;right:16px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;z-index:10}",
+      "#fc-demo-close:hover{background:rgba(255,255,255,.12);color:#fff}",
+      ".fc-dm-content{display:flex;flex:1;overflow:hidden}",
+      "#fc-dm-left{flex:1;padding:28px 32px 20px;display:flex;flex-direction:column;overflow-y:auto}",
+      ".fc-dm-eye{font-family:'Oxygen Mono',monospace;font-size:12px;letter-spacing:2.5px;color:#33E29A;display:block;margin-bottom:10px}",
+      ".fc-dm-support{margin:14px 0 0;font-size:12px;font-weight:300;color:rgba(255,255,255,.4);font-family:'Sofia Sans Semi Condensed',system-ui,sans-serif}",
+      ".fc-dm-support-footer{margin:0;padding:14px;text-align:center;border-top:1px solid rgba(255,255,255,.06)}",
+      ".fc-dm-support-link{color:#33E29A;text-decoration:none}",
+      ".fc-dm-support-link:hover{text-decoration:underline}",
+      "#fc-dm-hs-wrap{width:100%}",
+      "#fc-dm-hs-wrap iframe{width:100%!important;border:none;display:block}",
+      ".fc-dm-img-wrap{position:relative;height:160px;flex-shrink:0;overflow:hidden}",
+      ".fc-dm-banner{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}",
+      ".fc-dm-img-fade{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,1) 100%)}",
+      "#fc-dm-right{flex:1;display:flex;flex-direction:column;overflow-y:auto}",
+      ".fc-dm-right-body{padding:70px 32px 32px;display:flex;flex-direction:column;flex:1;justify-content:space-between}",
+      ".fc-dm-title{margin:0;font-size:24px;font-weight:700;color:#FFFFFF;font-family:'Sofia Sans Semi Condensed',system-ui,sans-serif;line-height:1.1}",
+      ".fc-dm-title-sub{display:block;font-size:15px;color:#ADADAD;font-family:'Inter',sans-serif;font-weight:400;margin-top:6px;margin-bottom:12px}",
+      ".fc-dm-top-group{display:flex;flex-direction:column;gap:16px}",
+      ".fc-dm-trusted{flex-shrink:0;display:flex;flex-direction:column;gap:8px}",
+      ".fc-dm-trusted-label{font-family:'Inter',sans-serif;font-size:13px;font-weight:400;color:#ADADAD;margin:0 0 8px;line-height:1.5}",
+      ".fc-dm-trusted-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px}",
+      ".fc-dm-trusted-list li{font-family:'Inter',sans-serif;font-size:16px;font-weight:400;color:#FFFFFF;display:flex;align-items:center;gap:10px}",
+      ".fc-dm-trusted-list li::before{content:'✓';color:#FFFFFF;font-size:13px;flex-shrink:0}",
+      ".fc-dm-trusted-sub{font-family:'Inter',sans-serif;font-size:14px;font-weight:400;color:#ADADAD;line-height:1.4;margin:0}",
+      ".fc-dm-quote{padding:18px 0 14px;margin-top:0}",
+      ".fc-dm-qtext{margin:0 0 10px;font-family:'Inter',sans-serif;font-size:13px;font-weight:400;font-style:italic;color:#7B7B7B;line-height:20px}",
+      ".fc-dm-qaum{font-family:'Inter',sans-serif;font-size:13px;font-weight:400;color:#7B7B7B;display:block;margin-bottom:3px}",
+      ".fc-dm-qsource{font-family:'Inter',sans-serif;font-size:13px;font-weight:400;color:#7B7B7B;display:block}",
+      "@media(max-width:680px){#fc-demo-modal{height:auto;max-height:92vh}.fc-dm-content{flex-direction:column}#fc-dm-right{display:none}}"
+    ].join("");
+    document.head.appendChild(style);
+
+    /* Overlay markup */
+    var overlay = document.createElement("div");
+    overlay.id = "fc-demo-overlay";
+    overlay.innerHTML = ''
+      + '<div id="fc-demo-modal" role="dialog" aria-modal="true">'
+      +   '<button id="fc-demo-close" aria-label="Close">&times;</button>'
+      +   '<div class="fc-dm-content">'
+      +   '<div id="fc-dm-left">'
+      +     '<div id="fc-dm-hs-wrap"></div>'
+      +   '</div>'
+      +   '<div id="fc-dm-right">'
+      +     '<div class="fc-dm-right-body">'
+      +       '<div class="fc-dm-top-group">'
+      +       '<div>'
+      +         '<h2 class="fc-dm-title">Reach out to our sales team</h2>'
+      +         '<span class="fc-dm-title-sub">We\'ll respond within 24 hours.</span>'
+      +       '</div>'
+      +       '<div class="fc-dm-trusted">'
+      +         '<p class="fc-dm-trusted-label">See how the following firms get real-time coverage on their universe:</p>'
+      +         '<ul class="fc-dm-trusted-list"><li>Hedge Funds</li><li>Family Offices</li><li>RIAs</li><li>Banks</li><li>Fortune 500 companies</li></ul>'
+      +       '</div>'
+      +       '<div class="fc-dm-quote">'
+      +         '<div class="fc-dm-qtext-wrap">'
+      +           '<p class="fc-dm-qtext">&ldquo;I\'ve been using Godel every day for research, market data, and option chain data. Fundamentals, options chain positioning, and market data to monitor the industries in my coverage area. Just the simple stuff that matters, all in one place.&rdquo;</p>'
+      +         '</div>'
+      +         '<span class="fc-dm-qaum">$350M AUM</span>'
+      +         '<span class="fc-dm-qsource">Equity-focused Hedge Fund &mdash; Feb 2026</span>'
+      +       '</div>'
+      +       '</div>'
+      +     '</div>'
+      +   '</div>'
+      +   '</div>'
+      + '</div>';
+    document.body.appendChild(overlay);
+
+    function openDemo() { overlay.classList.add("is-open"); }
+    function closeDemo() {
+      overlay.classList.remove("is-open");
+      history.replaceState(null, "", window.location.pathname);
+    }
+
+    document.getElementById("fc-demo-close").addEventListener("click", closeDemo);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeDemo(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDemo(); });
+
+    /* Document-level delegation so this works regardless of when the nav
+       is injected into the DOM. Matches #fc-nav-get-demo, #fc-mm-demo,
+       and any <a href="...#demo">. */
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest('#fc-nav-get-demo, #fc-mm-demo, a[href$="#demo"], a[href*="#demo"]');
+      if (!a) return;
+      var href = a.getAttribute("href") || "";
+      if (href && href.indexOf("#demo") === -1 && a.id !== "fc-nav-get-demo" && a.id !== "fc-mm-demo") return;
+      e.preventDefault();
+      openDemo();
+    });
+
+    if (window.location.hash === "#demo") openDemo();
+    window.addEventListener("hashchange", function () {
+      if (window.location.hash === "#demo") openDemo();
+    });
+    window.openDemo = openDemo;
+    window.closeDemo = closeDemo;
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); });
+  } else {
+    setTimeout(init, 0);
+  }
+})();

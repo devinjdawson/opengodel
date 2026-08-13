@@ -1,0 +1,521 @@
+/* Shared site nav — single source of truth for the top bar + mobile menu.
+
+   Usage (near the end of <body>):
+     <script src="site-nav.js" data-current="careers"></script>
+
+   Accepted data-current values (for the underline/highlight):
+     home  — index.html
+     features | changelog | faq | contact — index sections or contact.html
+     careers — careers.html and careers-*.html
+     news    — news.html, news-seed.html, news-pre-seed.html
+     (omit for pages that shouldn't highlight anything)
+
+   Hash links are canonicalised: on index.html they stay as "#features"
+   (no reload), everywhere else they point at "index.html#features".
+   The "Get a demo" link uses href="#demo" and is picked up by
+   demo-modal.js's document-level click delegation. */
+(function () {
+  /* ---------------------------------------------------------------
+     Feature flag: Solutions megamenu (added 2026-04-30).
+     Default `true` enables the megamenu. Override at runtime via:
+       ?nav=old   → force original nav (persists in localStorage)
+       ?nav=new   → force megamenu (persists in localStorage)
+       ?nav=reset → clear preference, fall back to default
+     The original pre-change file is preserved at
+     .build/backups/site-nav.original.js for full restore.
+     --------------------------------------------------------------- */
+  var SHOW_SOLUTIONS_MENU_DEFAULT = true;
+  var SHOW_SOLUTIONS_MENU = SHOW_SOLUTIONS_MENU_DEFAULT;
+  try {
+    var params = new URLSearchParams(location.search);
+    var navOverride = params.get("nav");
+    if (navOverride === "old")        localStorage.setItem("gt-nav-version", "old");
+    else if (navOverride === "new")   localStorage.setItem("gt-nav-version", "new");
+    else if (navOverride === "reset") localStorage.removeItem("gt-nav-version");
+    var stored = localStorage.getItem("gt-nav-version");
+    if (stored === "old")      SHOW_SOLUTIONS_MENU = false;
+    else if (stored === "new") SHOW_SOLUTIONS_MENU = true;
+  } catch (_) { /* localStorage unavailable — fall back to default */ }
+
+  /* Megamenu content. Each top-level entry becomes a nav trigger; its `columns`
+     render inside the shared megamenu panel when hovered. Items flagged
+     `soon:true` are rendered dimmed with a "Soon" tag — useful for surfacing
+     planned IA before pages exist. */
+  var MEGAMENUS = [
+    {
+      id: "product",
+      label: "Product",
+      columns: [{
+        heading: "Product",
+        seeAllHref: null,
+        items: [
+          { label: "Real-Time News",            href: "/real-time-market-news/" },
+          { label: "Real-Time Quotes",          href: "/real-time-quotes/" },
+          { label: "SEC Filings",               href: "/sec-filings/" },
+          { label: "Financial Terminal",        href: "/financial-terminal/" },
+          { label: "Asset Classes & Data Coverage", href: "/asset-classes-data-coverage/" }
+        ]
+      }]
+    },
+    {
+      id: "solutions",
+      label: "Customers",
+      columns: [{
+        heading: "Customers",
+        seeAllHref: null,
+        items: [
+          { label: "Wealth Teams & Family Offices", href: "/wealth-teams-family-offices/" },
+          { label: "Hedge Fund & Portfolio Managers", href: "/hedge-funds-portfolio-managers/" },
+          { label: "Equity Research",           href: "/equity-research/" },
+          { label: "Corporates & Investor Relations", href: "/corporates-investor-relations/" },
+          { label: "Traders & Individuals",     href: "/traders/" }
+        ]
+      }]
+    }
+  ];
+
+  var selfScript = document.currentScript;
+  var dataCurrent = selfScript && selfScript.dataset ? selfScript.dataset.current : "";
+  /* data-root="." for root-level pages, data-root=".." for pages one
+     directory deep (e.g. careers/backend-engineer.html). */
+  var ROOT = selfScript && selfScript.dataset && selfScript.dataset.root
+    ? selfScript.dataset.root
+    : ".";
+  function r(path) { return ROOT + "/" + path; }
+
+  var LOGO = "https://images.squarespace-cdn.com/content/v1/66be144e1b5d082acf687a90/caa8b98f-a00b-47a2-a28c-55b369b15630/logo.png";
+
+  function currentPage() {
+    if (dataCurrent) return dataCurrent;
+    var p = (location.pathname.split("/").pop() || "").toLowerCase();
+    if (!p || p === "index.html") return "home";
+    if (p.indexOf("news") === 0) return "news";
+    if (p.indexOf("careers") === 0) return "careers";
+    if (p === "contact.html") return "contact";
+    if (location.pathname.indexOf("/pricing") === 0) return "pricing";
+    return "";
+  }
+  var CURRENT = currentPage();
+
+  /* Anchor hrefs: on root-level pages use bare "#features" (same-page scroll);
+     from anywhere else route through index. */
+  var onIndex = CURRENT === "home";
+  function anchor(id) { return onIndex ? "#" + id : r("index.html#" + id); }
+
+  function init() {
+    if (document.getElementById("fc-navigation")) return;
+
+    /* Preload logo */
+    var img = new Image(); img.src = LOGO;
+
+    /* Styles */
+    var style = document.createElement("style");
+    style.textContent = [
+      "#fc-navigation{position:fixed!important;top:0!important;left:0!important;width:100%!important;height:70px!important;background:#000!important;display:flex!important;flex-wrap:nowrap!important;justify-content:flex-end;align-items:center;padding:15px 20px;z-index:99999!important;box-sizing:border-box;column-gap:20px;font-size:16px;font-family:'Inter','Sofia Sans','Helvetica',sans-serif;letter-spacing:normal;font-weight:400;-webkit-font-smoothing:antialiased;min-width:0}",
+      "#fc-navigation a{color:#eaeaea;text-decoration:none;white-space:nowrap;position:relative}",
+      "#fc-navigation a:hover{color:#fff}",
+      "#fc-navigation a.fc-nav-active{color:#fff}",
+      "#fc-navigation a.fc-nav-active::after{content:'';position:absolute;left:0;right:0;bottom:-8px;height:2px;background:#33E29A;border-radius:2px}",
+      "#fc-navigation #fc-logo{width:120px;min-width:120px;margin:0 15px;height:50px;background:url('" + LOGO + "') center/contain no-repeat;flex-shrink:0}",
+      "#fc-navigation .fc-nav-primary,#fc-mobile-menu .fc-nav-primary{position:relative;background:rgba(51,226,154,0.08);color:#33E29A;border:1.5px solid rgba(51,226,154,0.3);border-radius:100px;padding:10px 20px;overflow:hidden;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:0;transition:color 0.35s,border-color 0.35s;flex-shrink:0}",
+      "#fc-navigation .fc-nav-primary::before,#fc-mobile-menu .fc-nav-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#33E29A 0%,#1ecfb0 100%);transform:scaleX(0);transform-origin:left;transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);border-radius:100px;z-index:-1}",
+      "#fc-navigation .fc-nav-primary:hover::before,#fc-mobile-menu .fc-nav-primary:hover::before{transform:scaleX(1)}",
+      "#fc-navigation .fc-nav-primary:hover,#fc-mobile-menu .fc-nav-primary:hover{color:#000;border-color:#33E29A}",
+      "#fc-navigation .fc-nav-secondary,#fc-mobile-menu .fc-nav-secondary{margin-left:5px;background:linear-gradient(135deg,#1a1a1a,#111);color:#888;border:1px solid #222;border-radius:100px;padding:10px 20px;transition:border-color 0.18s,color 0.18s;flex-shrink:0}",
+      "#fc-navigation .fc-nav-secondary:hover,#fc-mobile-menu .fc-nav-secondary:hover{border-color:#444;color:#ccc}",
+      /* Hamburger */
+      "#fc-navigation #fc-hamburger{display:none;flex-shrink:0;width:42px;height:42px;background:transparent;border:1px solid rgba(255,255,255,.14);border-radius:10px;cursor:pointer;padding:0;align-items:center;justify-content:center;margin-left:4px}",
+      "#fc-navigation #fc-hamburger:hover{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.04)}",
+      "#fc-navigation #fc-hamburger span{display:block;position:relative;width:20px;height:2px;background:#eaeaea;border-radius:2px;transition:background-color .25s cubic-bezier(.4,0,.2,1)}",
+      "#fc-navigation #fc-hamburger span::before,#fc-navigation #fc-hamburger span::after{content:'';position:absolute;left:0;width:20px;height:2px;background:#eaeaea;border-radius:2px;transition:transform .28s cubic-bezier(.4,0,.2,1),top .28s cubic-bezier(.4,0,.2,1)}",
+      "#fc-navigation #fc-hamburger span::before{top:-6px}",
+      "#fc-navigation #fc-hamburger span::after{top:6px}",
+      "#fc-navigation #fc-hamburger.is-open span{background:transparent}",
+      "#fc-navigation #fc-hamburger.is-open span::before{top:0;transform:rotate(45deg)}",
+      "#fc-navigation #fc-hamburger.is-open span::after{top:0;transform:rotate(-45deg)}",
+      /* Mobile menu overlay */
+      "#fc-mobile-menu{position:fixed;top:70px;left:0;right:0;bottom:0;background:rgba(0,0,0,.98);z-index:99998;display:flex;flex-direction:column;padding:24px 24px 40px;overflow-y:auto;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s cubic-bezier(.4,0,.2,1);font-family:'Inter','Sofia Sans','Helvetica',sans-serif}",
+      "#fc-mobile-menu.is-open{opacity:1;visibility:visible;pointer-events:auto}",
+      "body.fc-menu-open{overflow:hidden}",
+      "#fc-mobile-menu a{display:block;padding:18px 4px;color:#eaeaea;font-size:18px;font-weight:500;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.08)}",
+      "#fc-mobile-menu a:hover{color:#fff}",
+      "#fc-mobile-menu a.fc-nav-active{color:#33E29A}",
+      "#fc-mobile-menu .fc-mm-cta{display:flex;flex-direction:column;gap:12px;margin-top:22px;padding-top:22px;border-top:1px solid rgba(255,255,255,.12)}",
+      "#fc-mobile-menu .fc-mm-cta .fc-nav-primary,#fc-mobile-menu .fc-mm-cta .fc-nav-secondary{text-align:center;padding:14px 24px;font-size:16px;margin-left:0}",
+      "#fc-mobile-menu .fc-mm-cta .fc-mm-demo{display:block;text-align:center;background:transparent;border:none!important;color:#eaeaea;padding:14px 24px;font-size:16px;font-weight:500}",
+      "#fc-mobile-menu .fc-mm-cta .fc-mm-demo:hover{color:#fff;background:transparent}",
+      /* Megamenu triggers + panel */
+      ".fc-mm-trigger{display:inline-flex;align-items:center;gap:4px;cursor:pointer}",
+      ".fc-mm-trigger .fc-caret{display:inline-block;border:solid #eaeaea;border-width:0 1.5px 1.5px 0;padding:3px;transform:rotate(45deg);margin-left:2px;margin-top:-3px;transition:transform .18s ease}",
+      ".fc-mm-trigger[aria-expanded='true'] .fc-caret{transform:rotate(-135deg);margin-top:1px}",
+      "#fc-megamenu{position:fixed;top:70px;left:0;transform:translateY(-8px);max-width:calc(100vw - 32px);background:#0a0a0a;border:1px solid #2a2a2a;border-radius:14px;padding:24px 28px;display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:32px;box-shadow:0 24px 64px rgba(0,0,0,.55);z-index:99997;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease,transform .18s ease,visibility 0s linear .18s}",
+      "#fc-megamenu.is-open{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0);transition:opacity .18s ease,transform .18s ease,visibility 0s}",
+      "#fc-megamenu .fc-mm-col h4{margin:0 0 10px;font-family:'Sofia Sans Semi Condensed',system-ui,sans-serif;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#9a9a9a}",
+      "#fc-megamenu .fc-mm-col h4 a{color:inherit;text-decoration:none}",
+      "#fc-megamenu .fc-mm-col h4 a:hover{color:#33E29A}",
+      "#fc-megamenu .fc-mm-col ul{list-style:none;margin:0;padding:0}",
+      "#fc-megamenu .fc-mm-col li{margin:0}",
+      "#fc-megamenu .fc-mm-col a.fc-mm-link{display:block;padding:6px 8px;margin:0 -8px;color:#eaeaea;font-size:14px;line-height:1.45;text-decoration:none;border-radius:6px;transition:background .15s ease,color .15s ease}",
+      "#fc-megamenu .fc-mm-col a.fc-mm-link:hover{background:rgba(51,226,154,0.08);color:#33E29A}",
+      "#fc-megamenu .fc-mm-col a.fc-mm-link.is-soon{color:#888}",
+      "#fc-megamenu .fc-mm-col a.fc-mm-link.is-soon:hover{background:rgba(255,255,255,0.04);color:#aaa}",
+      ".fc-mm-soon{display:inline-block;margin-left:8px;padding:1px 6px;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#9a9a9a;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:4px;vertical-align:middle}",
+      "#fc-mobile-menu .fc-mm-subsection{margin:6px 0 10px;padding-left:6px;border-left:1px solid rgba(255,255,255,.08)}",
+      "#fc-mobile-menu .fc-mm-subsection h5{margin:8px 0 2px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#666}",
+      "@media(max-width:1100px){#fc-megamenu{display:none!important}}",
+      /* Mobile: Product / Customers are collapsed by default to keep the menu short. */
+      "#fc-mobile-menu .fc-mm-section{border-bottom:1px solid rgba(255,255,255,.08)}",
+      "#fc-mobile-menu .fc-mm-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;padding:18px 4px;background:transparent;border:none;border-bottom:0;color:#eaeaea;font-family:'Inter','Sofia Sans','Helvetica',sans-serif;font-size:18px;font-weight:500;text-align:left;cursor:pointer}",
+      "#fc-mobile-menu .fc-mm-toggle::after{content:'';width:8px;height:8px;border-right:1.5px solid #aaa;border-bottom:1.5px solid #aaa;transform:rotate(45deg);transition:transform .18s ease;margin-right:4px}",
+      "#fc-mobile-menu .fc-mm-toggle[aria-expanded='true']::after{transform:rotate(-135deg);margin-top:6px}",
+      "#fc-mobile-menu .fc-mm-panel{display:none;padding:0 0 10px}",
+      "#fc-mobile-menu .fc-mm-panel.is-open{display:block}",
+      "#fc-mobile-menu .fc-mm-section a{padding:10px 4px 10px 14px;font-size:16px;border-bottom:none;color:#d8d8d8}",
+      /* Breakpoints — match index.html exactly */
+      "@media(max-width:1100px){.fc-hide-mobile{display:none!important}#fc-navigation #fc-hamburger{display:flex!important}}",
+      "@media(max-width:420px){#fc-navigation{padding:12px 12px;column-gap:10px}#fc-navigation #fc-logo{width:96px;min-width:96px;margin:0 6px;height:40px}#fc-navigation .fc-nav-primary{padding:8px 14px;font-size:14px}}"
+    ].join("");
+    document.head.appendChild(style);
+
+    /* Helpers for link markup */
+    function desktopLink(navId, label, href) {
+      var active = CURRENT === navId ? " fc-nav-active" : "";
+      return '<a class="fc-hide-mobile' + active + '" data-nav="' + navId + '" href="' + href + '">' + label + '</a>';
+    }
+    function mobileLink(navId, label, href) {
+      var active = CURRENT === navId ? " fc-nav-active" : "";
+      return '<a class="' + active + '" data-nav="' + navId + '" href="' + href + '">' + label + '</a>';
+    }
+
+    /* Desktop nav */
+    function megaTrigger(m) {
+      return '<button type="button" class="fc-hide-mobile fc-mm-trigger" data-mm="' + m.id + '" aria-haspopup="true" aria-expanded="false" aria-controls="fc-megamenu" style="background:none;border:none;color:#eaeaea;font:inherit;padding:0;letter-spacing:normal">' + m.label + '<span class="fc-caret" aria-hidden="true"></span></button>';
+    }
+    var solutionsTrigger = SHOW_SOLUTIONS_MENU
+      ? MEGAMENUS.map(megaTrigger).join("")
+      : "";
+
+    var nav = document.createElement("div");
+    nav.id = "fc-navigation";
+    /* When the megamenu is on, the standalone "Features" link is redundant —
+       its own /features/ section lives inside the Solutions dropdown. Hide it
+       in that case; with SHOW_SOLUTIONS_MENU=false the original link returns. */
+    var featuresDesktopLink = SHOW_SOLUTIONS_MENU ? "" : desktopLink("features", "Features", anchor("features"));
+
+    /* Contact + FAQ live in the footer + on every page's FAQ section.
+       Hidden from the top nav when the megamenu is on (per Danny 2026-04-30
+       restructure). With SHOW_SOLUTIONS_MENU=false they reappear. */
+    var contactDesktopLink = SHOW_SOLUTIONS_MENU ? "" : desktopLink("contact", "Contact", anchor("contact"));
+    var faqDesktopLink     = SHOW_SOLUTIONS_MENU ? "" : desktopLink("faq",     "FAQ",     anchor("faq"));
+
+    nav.innerHTML = ""
+      + '<a href="' + r("index.html") + '" id="fc-logo" aria-label="Godel Terminal home"></a>'
+      + featuresDesktopLink
+      + solutionsTrigger
+      + desktopLink("pricing",   "Pricing",   "/pricing/")
+      + faqDesktopLink
+      + contactDesktopLink
+      + desktopLink("docs",      "Documentation", r("docs.html"))
+      + desktopLink("careers",   "Careers",   r("careers.html"))
+      + desktopLink("news",      "News",      r("news.html"))
+      + '<div style="flex:1"></div>'
+      + '<a class="fc-hide-mobile" href="#demo" id="fc-nav-get-demo">Get a demo</a>'
+      + '<a class="fc-hide-mobile fc-nav-secondary" href="https://app.godelterminal.com/?page=login" target="_blank">Login</a>'
+      + '<a class="fc-hide-mobile fc-nav-primary" href="https://app.godelterminal.com/?page=register" target="_blank">Sign Up</a>'
+      + '<button type="button" id="fc-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="fc-mobile-menu"><span></span></button>';
+    document.body.prepend(nav);
+
+    /* Megamenu panel — single shared panel, content swaps based on hovered trigger. */
+    if (SHOW_SOLUTIONS_MENU) {
+      var mm = document.createElement("div");
+      mm.id = "fc-megamenu";
+      mm.setAttribute("role", "menu");
+      mm.setAttribute("aria-hidden", "true");
+      document.body.appendChild(mm);
+
+      function renderColumns(columns) {
+        return columns.map(function (col) {
+          var lis = col.items.map(function (it) {
+            var soonTag = it.soon ? ' <span class="fc-mm-soon">Soon</span>' : '';
+            var soonCls = it.soon ? ' is-soon' : '';
+            return '<li><a class="fc-mm-link' + soonCls + '" href="' + it.href + '">' + it.label + soonTag + '</a></li>';
+          }).join("");
+          var heading = col.seeAllHref
+            ? '<h4><a href="' + col.seeAllHref + '">' + col.heading + '</a></h4>'
+            : '<h4>' + col.heading + '</h4>';
+          return '<div class="fc-mm-col">' + heading + '<ul>' + lis + '</ul></div>';
+        }).join("");
+      }
+
+      var triggers = Array.prototype.slice.call(document.querySelectorAll(".fc-mm-trigger"));
+      var activeTrigger = null;
+      /* Per-column-count panel widths so single-column menus don't float as a
+         huge centered slab. 1-col fits ~6-8 short labels comfortably; 2-col is
+         used for the Resources menu (Workflows + Learn). */
+      var PANEL_WIDTH_BY_COLS = { 1: 280, 2: 600 };
+      function loadMegamenu(menuId) {
+        var menu = MEGAMENUS.filter(function (x) { return x.id === menuId; })[0];
+        if (!menu) return;
+        mm.innerHTML = renderColumns(menu.columns);
+        mm.style.gridTemplateColumns = "repeat(" + menu.columns.length + ", minmax(180px, 1fr))";
+        var w = PANEL_WIDTH_BY_COLS[menu.columns.length] || 820;
+        mm.style.width = w + "px";
+      }
+      function positionMegamenu(trigger) {
+        if (!trigger) return;
+        var rect = trigger.getBoundingClientRect();
+        var panelWidth = mm.offsetWidth;
+        var viewport = window.innerWidth;
+        var pad = 16;
+        /* Default: align panel's left edge with the trigger's left edge so the
+           dropdown clearly belongs to whatever the user is hovering. */
+        var left = rect.left;
+        /* Clamp to viewport so wide panels (Resources at 600px) hovered from a
+           right-side trigger slide in instead of overflowing offscreen. */
+        if (left + panelWidth > viewport - pad) left = viewport - pad - panelWidth;
+        if (left < pad) left = pad;
+        mm.style.left = Math.round(left) + "px";
+      }
+      function setMegamenu(open, menuId) {
+        if (open && menuId) {
+          loadMegamenu(menuId);
+          activeTrigger = document.querySelector('.fc-mm-trigger[data-mm="' + menuId + '"]');
+          positionMegamenu(activeTrigger);
+        }
+        mm.classList.toggle("is-open", !!open);
+        mm.setAttribute("aria-hidden", open ? "false" : "true");
+        triggers.forEach(function (t) {
+          t.setAttribute("aria-expanded", (open && t === activeTrigger) ? "true" : "false");
+        });
+        if (!open) activeTrigger = null;
+      }
+      window.addEventListener("resize", function () {
+        if (mm.classList.contains("is-open")) positionMegamenu(activeTrigger);
+      });
+
+      triggers.forEach(function (trigger) {
+        trigger.addEventListener("click", function (e) {
+          e.stopPropagation();
+          var id = trigger.getAttribute("data-mm");
+          if (mm.classList.contains("is-open") && activeTrigger === trigger) setMegamenu(false);
+          else setMegamenu(true, id);
+        });
+        trigger.addEventListener("mouseenter", function () {
+          setMegamenu(true, trigger.getAttribute("data-mm"));
+        });
+        trigger.addEventListener("mouseleave", scheduleLeave);
+      });
+      mm.addEventListener("mouseenter", function () {
+        if (activeTrigger) setMegamenu(true, activeTrigger.getAttribute("data-mm"));
+      });
+      mm.addEventListener("mouseleave", scheduleLeave);
+
+      function scheduleLeave() {
+        setTimeout(function () {
+          var stillHovered = mm.matches(":hover")
+            || triggers.some(function (t) { return t.matches(":hover"); });
+          if (!stillHovered) setMegamenu(false);
+        }, 120);
+      }
+      document.addEventListener("click", function (e) {
+        if (!mm.contains(e.target) && !e.target.closest(".fc-mm-trigger")) setMegamenu(false);
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") setMegamenu(false);
+      });
+      mm.addEventListener("click", function (e) {
+        if (e.target.closest("a")) setMegamenu(false);
+      });
+    }
+
+    /* Mobile menu — top-level Product / Customers entries are closed by default
+       and expand as tappable dropdowns on phones. */
+    var mobileMegamenu = "";
+    if (SHOW_SOLUTIONS_MENU) {
+      mobileMegamenu = MEGAMENUS.map(function (menu) {
+        var inner = menu.columns.map(function (col) {
+          var lis = col.items.map(function (it) {
+            var soonTag = it.soon ? ' <span class="fc-mm-soon">Soon</span>' : '';
+            return '<a href="' + it.href + '">' + it.label + soonTag + '</a>';
+          }).join("");
+          if (menu.columns.length === 1) return lis;
+          return '<div class="fc-mm-subsection"><h5>' + col.heading + '</h5>' + lis + '</div>';
+        }).join("");
+        var panelId = "fc-mm-panel-" + menu.id;
+        return '<div class="fc-mm-section">'
+          + '<button type="button" class="fc-mm-toggle" aria-expanded="false" aria-controls="' + panelId + '">' + menu.label + '</button>'
+          + '<div class="fc-mm-panel" id="' + panelId + '">' + inner + '</div>'
+          + '</div>';
+      }).join("");
+    }
+
+    var mmenu = document.createElement("nav");
+    mmenu.id = "fc-mobile-menu";
+    mmenu.setAttribute("aria-hidden", "true");
+    var featuresMobileLink = SHOW_SOLUTIONS_MENU ? "" : mobileLink("features", "Features", anchor("features"));
+
+    var contactMobileLink = SHOW_SOLUTIONS_MENU ? "" : mobileLink("contact", "Contact", anchor("contact"));
+    var faqMobileLink     = SHOW_SOLUTIONS_MENU ? "" : mobileLink("faq",     "FAQ",     anchor("faq"));
+
+    mmenu.innerHTML = ""
+      + featuresMobileLink
+      + mobileLink("pricing",   "Pricing",   "/pricing/")
+      + faqMobileLink
+      + contactMobileLink
+      + mobileLink("docs",      "Documentation", r("docs.html"))
+      + mobileLink("careers",   "Careers",   r("careers.html"))
+      + mobileLink("news",      "News",      r("news.html"))
+      + mobileMegamenu
+      + '<div class="fc-mm-cta">'
+      +   '<a class="fc-mm-demo" href="#demo" id="fc-mm-demo">Get a demo</a>'
+      +   '<a class="fc-nav-secondary" href="https://app.godelterminal.com/?page=login" target="_blank">Login</a>'
+      +   '<a class="fc-nav-primary" href="https://app.godelterminal.com/?page=register" target="_blank">Sign Up</a>'
+      + "</div>";
+    document.body.appendChild(mmenu);
+
+    mmenu.querySelectorAll(".fc-mm-toggle").forEach(function (button) {
+      button.addEventListener("click", function () {
+        var panel = document.getElementById(button.getAttribute("aria-controls"));
+        var isOpen = button.getAttribute("aria-expanded") === "true";
+        mmenu.querySelectorAll(".fc-mm-toggle").forEach(function (otherButton) {
+          otherButton.setAttribute("aria-expanded", "false");
+        });
+        mmenu.querySelectorAll(".fc-mm-panel").forEach(function (otherPanel) {
+          otherPanel.classList.remove("is-open");
+        });
+        button.setAttribute("aria-expanded", isOpen ? "false" : "true");
+        if (panel) panel.classList.toggle("is-open", !isOpen);
+      });
+    });
+
+    /* Hamburger behavior */
+    var hamburger = document.getElementById("fc-hamburger");
+    document.documentElement.style.overflow = "";
+    document.body.classList.remove("fc-menu-open");
+    function setMobileMenu(open) {
+      var isOpen = typeof open === "boolean" ? open : !hamburger.classList.contains("is-open");
+      hamburger.classList.toggle("is-open", isOpen);
+      hamburger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      mmenu.classList.toggle("is-open", isOpen);
+      mmenu.setAttribute("aria-hidden", isOpen ? "false" : "true");
+      document.body.classList.toggle("fc-menu-open", isOpen);
+      if (isOpen) {
+        mmenu.querySelectorAll(".fc-mm-toggle").forEach(function (button) {
+          button.setAttribute("aria-expanded", "false");
+        });
+        mmenu.querySelectorAll(".fc-mm-panel").forEach(function (panel) {
+          panel.classList.remove("is-open");
+        });
+      }
+    }
+    hamburger.addEventListener("click", function () { setMobileMenu(); });
+    mmenu.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { setMobileMenu(false); });
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") setMobileMenu(false);
+    });
+    window.addEventListener("resize", function () {
+      if (window.innerWidth > 1100) setMobileMenu(false);
+    });
+
+    /* Smooth anchor scrolling with fixed-nav offset.
+       #contact gets its own value because .gt-contact-section has 80px
+       of top padding (the mint gradient banner) that we want behind the
+       nav, not visible as a green band above the heading. */
+    var scrollStyle = document.createElement("style");
+    scrollStyle.textContent =
+      "html{scroll-behavior:smooth}" +
+      "#features,#changelog,#faq{scroll-margin-top:90px}" +
+      "#contact{scroll-margin-top:10px}";
+    document.head.appendChild(scrollStyle);
+
+    var NAV_OFFSET_DEFAULT = 90;
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest('a[href*="#"]');
+      if (!a) return;
+      var href = a.getAttribute("href") || "";
+      var hashMatch = href.match(/#([^#]+)$/);
+      if (!hashMatch) return;
+      var id = hashMatch[1];
+      if (!id || id === "demo") return; /* demo opens a modal (demo-modal.js) */
+      /* Only intercept anchors on the current page — cross-page anchors
+         should navigate normally and the browser will scroll after load. */
+      var currentFile = location.pathname.split("/").pop() || "index.html";
+      var isSamePage = href.indexOf("#") === 0
+                    || href.indexOf(currentFile + "#") === 0;
+      if (!isSamePage) return;
+      var target = document.getElementById(id);
+      if (!target) return;
+      e.preventDefault();
+      /* Honour the target's own CSS scroll-margin-top if set — lets
+         per-section overrides (like #contact) actually work. */
+      var cssMargin = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+      var offset = cssMargin || NAV_OFFSET_DEFAULT;
+      var targetY = target.getBoundingClientRect().top + window.pageYOffset - offset;
+      window.scrollTo({ top: Math.max(0, targetY), behavior: "smooth" });
+    });
+
+    /* Note: body { padding-top: 70px } is set by each page's
+       <style id="critical-base"> block in the <head>, which runs on
+       first paint. Setting it here from JS would just add a layout
+       shift when the JS fires, which is exactly what we're avoiding. */
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); });
+  } else {
+    setTimeout(init, 0);
+  }
+})();
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Clickable command pills. Every orange .gt-cmd that names a real command (and
+   has a docs page) becomes a link to that command's reference. Excludes the
+   non-command pill variants (geo / asset / ticker), pills already inside a link,
+   and commands with no doc page yet (e.g. roadmap commands GF, EQRV, PORT, MEMB).
+   Runs on every page that loads this script. Idempotent; wrapped so a failure
+   here can never affect the nav above.
+   ─────────────────────────────────────────────────────────────────────────── */
+(function () {
+  var SLUGS = {};
+  ("acm al allq anr aum brok calc cf change chat des dvd em ent eqs ern evt fa " +
+   "focus fx g glco gr halt hcp hds help hms hp ipo most n note omon ovme pdf qm " +
+   "secf si tas top tran trend wei weif wji").split(" ").forEach(function (s) { SLUGS[s] = 1; });
+
+  function linkifyCommandPills() {
+    try {
+      var here = location.pathname.replace(/\.html$/, "").replace(/\/+$/, "");
+      var pills = document.querySelectorAll(".gt-cmd");
+      for (var i = 0; i < pills.length; i++) {
+        var el = pills[i];
+        if (typeof el.className === "string" && el.className.indexOf("gt-cmd--") !== -1) continue; // geo/asset/ticker
+        if (el.closest && el.closest("a")) continue;                                              // already linked
+        var slug = (el.textContent || "").trim().toLowerCase();
+        if (!SLUGS[slug]) continue;                                                               // not a live command
+        if (here === "/docs/commands/" + slug) continue;                                          // don't self-link
+        var a = document.createElement("a");
+        a.className = "gt-cmd-link";
+        a.href = "/docs/commands/" + slug + ".html";
+        a.setAttribute("title", el.textContent.trim() + " command reference");
+        el.parentNode.insertBefore(a, el);
+        a.appendChild(el);
+      }
+      if (!document.getElementById("gt-cmd-link-style")) {
+        var st = document.createElement("style");
+        st.id = "gt-cmd-link-style";
+        st.textContent =
+          ".gt-cmd-link{text-decoration:none}" +
+          ".gt-cmd-link .gt-cmd{cursor:pointer;transition:background .15s ease,border-color .15s ease}" +
+          ".gt-cmd-link:hover .gt-cmd{background:#3a2616;border-color:#7a4e1d}";
+        document.head.appendChild(st);
+      }
+    } catch (e) { /* never let pill-linking break the page */ }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", linkifyCommandPills);
+  } else {
+    linkifyCommandPills();
+  }
+})();

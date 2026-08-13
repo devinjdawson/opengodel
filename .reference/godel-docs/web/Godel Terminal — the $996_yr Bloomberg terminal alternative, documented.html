@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<!-- saved from url=(0030)https://godelterminal.com/docs -->
+<html lang="en-US"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="origin-trial" content="A7vZI3v+Gz7JfuRolKNM4Aff6zaGuT7X0mf3wtoZTnKv6497cVMnhy03KDqX7kBz/q/iidW7srW31oQbBt4VhgoAAACUeyJvcmlnaW4iOiJodHRwczovL3d3dy5nb29nbGUuY29tOjQ0MyIsImZlYXR1cmUiOiJEaXNhYmxlVGhpcmRQYXJ0eVN0b3JhZ2VQYXJ0aXRpb25pbmczIiwiZXhwaXJ5IjoxNzU3OTgwODAwLCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><style data-hubspot-styled-components=""></style>
+  <style id="critical-base">
+    /* Applied on first paint to prevent FOUT + layout shift. See README. */
+    @font-face {
+      font-family: "Inter Fallback";
+      src: local("Arial");
+      size-adjust: 107.40%;
+      ascent-override: 90.00%;
+      descent-override: 22.43%;
+      line-gap-override: 0%;
+    }
+    html, body {
+      margin: 0 !important;
+      background: #000 !important;
+      color: #eaeaea !important;
+      font-family: 'Inter', 'Inter Fallback', 'Helvetica Neue', Arial, sans-serif !important;
+      -webkit-font-smoothing: antialiased !important;
+    }
+    body { padding-top: 70px !important; }
+  </style>
+
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+
+  <!-- === SEO === -->
+  <title>Godel Terminal — the $996/yr Bloomberg terminal alternative, documented</title>
+  <meta name="description" content="Godel Terminal docs: a professional trading terminal and Bloomberg terminal alternative starting at $996/yr vs Bloomberg&#39;s $27,000/yr. Commands, keyboard shortcuts, workflows, SEC EDGAR filings, REST API and WebSocket access for hedge funds, RIAs, and family offices.">
+  <meta name="keywords" content="bloomberg terminal alternative, alternative to bloomberg terminal, bloomberg terminal competitors, bloomberg terminal price, bloomberg terminal free alternative, trading terminal, trader terminal, financial terminal, finance terminal, news terminal, stock terminal, market terminal, market data terminal, terminal trading platform, trading platform github, SEC EDGAR API, Godel Terminal commands, hedge fund software, RIA software, family office software">
+  <link rel="canonical" href="https://godelterminal.com/docs">
+
+  <meta property="og:site_name" content="Godel Terminal">
+  <meta property="og:title" content="Godel Terminal — the Bloomberg terminal alternative, documented">
+  <meta property="og:description" content="Docs for the $996/yr Bloomberg terminal alternative. A professional trading terminal for hedge funds, RIAs, and family offices with SEC EDGAR filings and REST/WebSocket API access.">
+  <meta property="og:url" content="https://godelterminal.com/docs">
+  <meta property="og:image" content="https://godelterminal.com/assets/seo/img/og-home.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="603">
+  <meta property="og:image:alt" content="Godel Terminal workspace with quote monitor, options chain, holders, financials, and real-time news pinned side by side">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:title" content="Godel Terminal — Bloomberg terminal alternative, documented">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://godelterminal.com/assets/seo/img/og-home.jpg">
+  <meta name="twitter:description" content="A professional trading terminal starting at $996/yr vs Bloomberg&#39;s $27,000. SEC EDGAR, market data, options, news — the commands that power professional finance, documented.">
+
+  <!-- Schema.org for docs -->
+  <script type="text/javascript" async="" charset="utf-8" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/recaptcha__en.js.download" crossorigin="anonymous" integrity="sha384-5gTdLl6IS0Y6zKiLKimmhaY3IOLosQFpvj9Tvt9s2RAiKLtLUEWOP5N8mtHLNUzF"></script><script src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/45198047.js.download" type="text/javascript" id="hs-analytics"></script><script src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/collectedforms.js.download" type="text/javascript" id="CollectedForms-45198047" crossorigin="anonymous" data-leadin-portal-id="45198047" data-leadin-env="prod" data-loader="hs-scriptloader" data-hsjs-portal="45198047" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/banner.js.download" type="text/javascript" id="cookieBanner-45198047" data-cookieconsent="ignore" data-hs-ignore="true" data-loader="hs-scriptloader" data-hsjs-portal="45198047" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/conversations-embed.js.download" type="text/javascript" id="hubspot-messages-loader" data-loader="hs-scriptloader" data-hsjs-portal="45198047" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/pixels.js.download" type="text/javascript" id="hs-ads-pixel-45198047" data-ads-portal-id="45198047" data-ads-env="prod" data-loader="hs-scriptloader" data-hsjs-portal="45198047" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script async="" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/roundtrip.js.download"></script><script async="" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/uwt.js.download"></script><script async="" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/fbevents.js.download"></script><script async="" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/gtm.js.download"></script><script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Godel Terminal Documentation",
+    "description": "Official documentation for the Godel Terminal — commands and workflows for professional trading.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "DL Software",
+      "logo": { "@type": "ImageObject", "url": "https://godelterminal.com/assets/logo.png" }
+    },
+    "about": [
+      "Bloomberg Terminal alternative",
+      "Trading terminal",
+      "Real-time market data",
+      "Financial workflows"
+    ]
+  }
+  </script>
+
+  <link rel="icon" type="image/x-icon" media="(prefers-color-scheme: light)" href="https://images.squarespace-cdn.com/content/v1/66be144e1b5d082acf687a90/3c933c24-bd2a-4692-970e-9daee1a38d33/favicon.ico?format=100w">
+  <link rel="icon" type="image/x-icon" media="(prefers-color-scheme: dark)" href="https://images.squarespace-cdn.com/content/v1/66be144e1b5d082acf687a90/b470418d-9d30-40cf-8a9e-21880b1f9c2f/favicon.ico?format=100w">
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+  <link href="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/css2" rel="stylesheet">
+  <script src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/analytics.js.download"></script><script async="" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    /* Cross-document fade when navigating between docs pages. Modern
+       browsers (Chrome 126+, Safari 18+) handle this natively. Older
+       browsers fall back to the keyframes below on initial paint. */
+    @view-transition { navigation: auto; }
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration: 280ms;
+      animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @supports not (view-transition-name: none) {
+      .docs-wrap { animation: docs-fade-in 280ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+    }
+    @keyframes docs-fade-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    :root {
+      --bg:           #000;
+      --mint:         #33E29A;
+      --mint-dim:     rgba(51,226,154,0.10);
+      --mint-border:  rgba(51,226,154,0.32);
+      --amber:        #E9B86E;
+      --fg:           #eaeaea;
+      --fg-muted:     #B6B6B6;
+      --fg-dim:       #888;
+      --border:       rgba(255,255,255,0.08);
+      --border-strong:rgba(255,255,255,0.14);
+      --card-g1:      #141414;
+      --card-g2:      #0b0b0b;
+      --card-g3:      #070707;
+    }
+
+    h1, h2, h3, h4 { font-family: 'Sofia Sans Semi Condensed', system-ui, 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* =========================== Layout ============================ */
+    .docs-wrap {
+      max-width: 1200px; margin: 0 auto; padding: 56px 32px 120px;
+      position: relative; z-index: 1;
+    }
+
+    .grid-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+      background-size: 120px 120px;
+    }
+
+    /* =========================== Hero ============================== */
+    .docs-hero { margin-bottom: 56px; text-align: left; max-width: 900px; }
+    .docs-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px; border-radius: 100px;
+      border: 1px solid var(--mint-border); background: var(--mint-dim);
+      color: var(--mint); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+    .docs-eyebrow .dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--mint);
+    }
+    .docs-h1 {
+      font-size: clamp(38px, 5.4vw, 68px); line-height: 1.05;
+      color: #fff; letter-spacing: -0.03em; font-weight: 700;
+    }
+    .docs-h1 span { color: var(--mint); }
+    .docs-sub {
+      margin: 20px 0 0; color: var(--fg-muted);
+      font-size: clamp(17px, 1.5vw, 20px); line-height: 1.55; max-width: 780px;
+    }
+
+    /* =========================== Search ============================ */
+    .docs-search-wrap {
+      position: relative; max-width: 640px; margin-top: 36px;
+    }
+    .docs-search {
+      display: flex; gap: 10px; align-items: center;
+      border: 1px solid var(--border-strong);
+      background: rgba(255,255,255,0.03); border-radius: 14px;
+      padding: 12px 16px; transition: border-color .2s, background .2s;
+    }
+    .docs-search:focus-within {
+      border-color: var(--mint-border); background: rgba(51,226,154,0.04);
+    }
+    .docs-search input {
+      flex: 1; background: transparent; border: 0; outline: none;
+      color: var(--fg); font-size: 15px; font-family: inherit;
+    }
+    .docs-search input::placeholder { color: var(--fg-dim); }
+    .docs-search .kbd {
+      font-family: 'Oxygen Mono', monospace; font-size: 11px; color: var(--fg-muted);
+      border: 1px solid var(--border); border-radius: 6px; padding: 3px 7px;
+    }
+    /* Results dropdown */
+    .docs-search-results {
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+      background: #0e0e0e;
+      border: 1px solid var(--border-strong);
+      border-radius: 14px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+      max-height: 420px; overflow-y: auto;
+      z-index: 100; padding: 6px;
+    }
+    .docs-search-results[hidden] { display: none; }
+    .docs-search-result {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 10px 12px; border-radius: 8px;
+      color: var(--fg); text-decoration: none;
+      transition: background .12s;
+    }
+    .docs-search-result:hover,
+    .docs-search-result.is-active {
+      background: rgba(255,255,255,0.04);
+    }
+    .docs-search-result .gt-cmd { flex-shrink: 0; margin-top: 2px; }
+    /* "Page" / "Section" badge for topic results */
+    .docs-search-kind {
+      flex-shrink: 0; margin-top: 3px;
+      font-family: "Oxygen Mono", monospace; font-size: 10px;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--fg-muted);
+      border: 1px solid var(--border-strong);
+      background: rgba(255,255,255,0.04);
+      border-radius: 5px;
+      padding: 3px 7px;
+      min-width: 66px; text-align: center;
+    }
+    .docs-search-result .meta {
+      display: flex; flex-direction: column; gap: 2px; min-width: 0;
+    }
+    .docs-search-result .meta .title {
+      color: #fff; font-weight: 500; font-size: 14px;
+    }
+    .docs-search-result .meta .blurb {
+      color: var(--fg-muted); font-size: 12px; line-height: 1.4;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .docs-search-empty {
+      padding: 18px 14px; color: var(--fg-dim);
+      font-size: 13px; text-align: center;
+    }
+
+    /* Section header */
+    .docs-section { margin: 64px 0 0; }
+    .docs-section-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 12px; margin-bottom: 20px;
+      border-bottom: 1px solid var(--border); padding-bottom: 14px;
+    }
+    .docs-section-head h2 {
+      font-size: clamp(24px, 2.8vw, 34px); color: #fff;
+    }
+    .docs-section-head p {
+      margin: 0; color: var(--fg-muted); font-size: 14px;
+    }
+    .docs-section-head a {
+      color: var(--mint); font-size: 13px; font-weight: 500;
+      white-space: nowrap;
+    }
+
+    /* =========================== Card grid ========================= */
+    .docs-grid {
+      display: grid; gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    .docs-card {
+      display: flex; flex-direction: column;
+      padding: 22px 22px 20px;
+      background: radial-gradient(140% 120% at 10% 0%,
+                                  var(--card-g1) 0%,
+                                  var(--card-g2) 60%,
+                                  var(--card-g3) 100%);
+      border-radius: 14px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07),
+                  0 10px 30px rgba(0,0,0,0.45);
+      transition: transform .15s ease, box-shadow .15s ease;
+      color: inherit;
+    }
+    .docs-card:hover {
+      transform: translateY(-2px);
+      box-shadow: inset 0 0 0 1px var(--mint-border),
+                  0 12px 34px rgba(0,0,0,0.55);
+    }
+    .docs-card-eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: 'Oxygen Mono', monospace; font-size: 10px;
+      color: var(--mint); letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .docs-card h3 {
+      font-size: 19px; font-weight: 600; color: #fff; margin: 0 0 6px;
+      letter-spacing: -0.01em; line-height: 1.25;
+    }
+    .docs-card p {
+      margin: 0; color: var(--fg-muted); font-size: 14px; line-height: 1.55;
+    }
+    .docs-card-meta {
+      margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;
+      font-size: 12px; color: var(--fg-dim);
+    }
+    .docs-card-meta .pill {
+      padding: 2px 8px; border-radius: 6px;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.03);
+    }
+
+    /* Terminal-syntax pills — four color variants matching the in-product
+       guideline:
+         default / .gt-cmd  → amber   → Command
+         .gt-cmd--geo        → green   → Country / Instrument
+         .gt-cmd--asset      → blue    → Asset class
+         .gt-cmd--ticker     → neutral → Ticker / identifier / descriptor */
+    .gt-cmd {
+      display: inline-block;
+      color: #e89a3c;
+      background: #2b1d11;
+      border: 1px solid #593815;
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-family: "Oxygen Mono", monospace;
+      font-size: 12px;
+      font-weight: 400;
+      vertical-align: middle;
+    }
+    .gt-cmd--geo {
+      color: #6ac193;
+      background: rgba(106,193,147,0.10);
+      border-color: rgba(106,193,147,0.32);
+    }
+    .gt-cmd--asset {
+      color: #6c9ad8;
+      background: rgba(108,154,216,0.10);
+      border-color: rgba(108,154,216,0.32);
+    }
+    .gt-cmd--ticker {
+      color: #eaeaea;
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.14);
+    }
+
+    /* Command reference grid tiles */
+    .cmd-grid {
+      display: grid; gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+    .cmd-pill {
+      display: flex; flex-direction: column; gap: 6px; align-items: flex-start;
+      padding: 14px 16px; border-radius: 10px;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.02);
+      transition: border-color .15s, background .15s, transform .15s;
+      color: inherit;
+    }
+    a.cmd-pill:hover {
+      border-color: var(--mint-border);
+      background: rgba(51,226,154,0.04); transform: translateY(-1px);
+    }
+    /* Undocumented commands — still listed so readers know they exist,
+       but dimmed + not clickable so the page doesn't lie about what's ready. */
+    .cmd-pill.is-stub {
+      opacity: 0.45; cursor: default;
+    }
+    .cmd-pill.is-stub:hover {
+      border-color: var(--border); background: rgba(255,255,255,0.02);
+      transform: none;
+    }
+    .cmd-pill.is-stub .code { opacity: 0.7; }
+    /* The code span inside each tile uses the same amber pill treatment
+       as .gt-cmd, just one notch larger so it reads well in a tile. */
+    .cmd-pill .code {
+      display: inline-block;
+      color: #e89a3c;
+      background: #2b1d11;
+      border: 1px solid #593815;
+      border-radius: 6px;
+      padding: 2px 10px;
+      font-family: 'Oxygen Mono', monospace;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.3;
+    }
+    .cmd-pill .label {
+      font-size: 12px; color: var(--fg-muted); line-height: 1.35;
+    }
+    /* Code + status badge share the top row of the tile. */
+    .cmd-pill-top {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .cmd-badge {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 2px 7px; border-radius: 999px; line-height: 1.4;
+      white-space: nowrap;
+    }
+    .cmd-badge.beta {
+      color: #33E29A; background: rgba(51,226,154,0.12);
+      border: 1px solid rgba(51,226,154,0.40);
+    }
+    .cmd-badge.soon {
+      color: #cfcfcf; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    /* Compare / switching section */
+    .docs-switch-grid {
+      display: grid; gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+    .switch-card {
+      padding: 22px; border-radius: 14px;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.02);
+      transition: border-color .15s, background .15s;
+    }
+    .switch-card:hover { border-color: var(--mint-border); background: rgba(51,226,154,0.03); }
+    .switch-card .from { color: var(--fg-dim); font-size: 12px; letter-spacing: 2px;
+      text-transform: uppercase; font-family: 'Oxygen Mono', monospace; }
+    .switch-card h3 { font-size: 20px; color: #fff; margin: 8px 0 6px; }
+    .switch-card p { margin: 0; color: var(--fg-muted); font-size: 14px; line-height: 1.55; }
+    .switch-card .price {
+      margin-top: 14px; display: flex; gap: 10px; align-items: baseline;
+      font-family: 'Oxygen Mono', monospace; font-size: 12px; color: var(--fg-muted);
+    }
+    .switch-card .price s { color: var(--fg-dim); }
+    .switch-card .price strong { color: var(--mint); font-size: 14px; }
+
+    /* Command section group header (rendered by JS) */
+    .cmd-cat-label {
+      color: var(--fg-muted); font-size: 13px; letter-spacing: 2px;
+      text-transform: uppercase; font-family: 'Oxygen Mono', monospace;
+      margin: 28px 0 12px;
+    }
+    .cmd-cat-label:first-child { margin-top: 8px; }
+
+    /* Keyboard-shortcut table */
+    .shortcut-table-wrap {
+      overflow-x: auto; border: 1px solid var(--border); border-radius: 14px;
+      background: rgba(255,255,255,0.02);
+    }
+    .shortcut-table {
+      width: 100%; border-collapse: collapse; font-size: 14px;
+    }
+    .shortcut-table th, .shortcut-table td {
+      padding: 14px 18px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .shortcut-table thead th {
+      color: var(--fg-muted); font-weight: 600; font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      background: rgba(255,255,255,0.03);
+    }
+    .shortcut-table tbody tr:last-child td { border-bottom: 0; }
+    .shortcut-table tbody td:first-child { white-space: nowrap; }
+    .shortcut-table td kbd.kbd {
+      display: inline-block;
+      font-family: 'Oxygen Mono', monospace; font-size: 12px;
+      color: var(--fg); background: #1a1a1a;
+      border: 1px solid var(--border-strong); border-bottom-width: 2px;
+      border-radius: 6px; padding: 3px 8px;
+      margin: 0 2px; vertical-align: middle;
+    }
+    .shortcut-table .kbd-note {
+      color: var(--fg-dim); font-size: 12px; margin-left: 6px;
+    }
+
+    /* API-interest banner (lead-capture for enterprise API requests) */
+    .api-cta {
+      margin-top: 48px;
+      padding: 24px 28px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      display: grid; gap: 16px;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+    @media (max-width: 640px) { .api-cta { grid-template-columns: 1fr; } }
+    .api-cta h3 {
+      color: #fff; font-size: clamp(18px, 2vw, 22px); margin: 0 0 4px;
+    }
+    .api-cta p {
+      color: var(--fg-muted); margin: 0;
+      font-size: 14px; line-height: 1.55; max-width: 60ch;
+    }
+    .api-cta .btn-ghost-mint {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 11px 22px; border-radius: 100px;
+      border: 1.5px solid var(--mint-border);
+      background: var(--mint-dim); color: var(--mint);
+      font-weight: 600; font-size: 14px; white-space: nowrap;
+      transition: background .15s, border-color .15s, color .15s, transform .12s;
+    }
+    .api-cta .btn-ghost-mint:hover {
+      background: var(--mint); color: #000; border-color: var(--mint);
+      transform: translateY(-1px);
+    }
+
+    /* Audience strip */
+    .audience-strip {
+      margin-top: 72px; padding: 32px;
+      border-radius: 16px; background: rgba(51,226,154,0.04);
+      border: 1px solid var(--mint-border);
+      display: grid; gap: 10px; grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+    @media (max-width: 720px) { .audience-strip { grid-template-columns: 1fr; } }
+    .audience-strip h3 {
+      font-size: clamp(22px, 2.3vw, 28px); color: #fff;
+    }
+    .audience-strip h3 span { color: var(--mint); }
+    .audience-strip p { color: var(--fg-muted); margin: 6px 0 0; font-size: 15px; }
+    .audience-strip a {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 26px; border-radius: 100px;
+      background: var(--mint); color: #000; font-weight: 700;
+      font-size: 15px; letter-spacing: 0.02em;
+      transition: background .18s, transform .12s;
+    }
+    .audience-strip a:hover { background: #4debb0; transform: translateY(-1px); }
+
+    /* Final CTA */
+    .docs-cta {
+      margin-top: 80px; text-align: center;
+      padding: 56px 24px;
+      border-radius: 18px;
+      background: radial-gradient(ellipse at 50% 0%,
+                                  rgba(51,226,154,0.08) 0%, transparent 60%),
+                  radial-gradient(140% 120% at 10% 100%,
+                                  var(--card-g1) 0%, var(--card-g2) 60%, var(--card-g3) 100%);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08),
+                  0 10px 30px rgba(0,0,0,0.45);
+    }
+    .docs-cta h2 { font-size: clamp(28px, 3.4vw, 44px); color: #fff; margin-bottom: 10px; }
+    .docs-cta p  { color: var(--fg-muted); font-size: 16px; line-height: 1.55; max-width: 640px; margin: 0 auto; }
+    .docs-cta .row {
+      margin-top: 26px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    }
+    .docs-cta .btn-primary {
+      background: var(--mint); color: #000; font-weight: 700;
+      padding: 13px 28px; border-radius: 100px;
+      transition: background .18s, transform .12s;
+    }
+    .docs-cta .btn-primary:hover { background: #4debb0; transform: translateY(-1px); }
+    .docs-cta .btn-ghost {
+      color: var(--mint); border: 1.5px solid var(--mint-border);
+      padding: 12px 26px; border-radius: 100px;
+      transition: background .18s, border-color .18s;
+    }
+    .docs-cta .btn-ghost:hover { background: var(--mint-dim); border-color: var(--mint); }
+
+    /* Sidebar — Cerebras-style: search at top, section groups, scoped scroll */
+    @media (min-width: 1080px) {
+      .docs-layout { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: 48px; align-items: start; }
+      .docs-toc {
+        position: sticky; top: 86px;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto; overscroll-behavior: contain;
+        padding: 4px 4px 24px 0;
+        font-size: 13.5px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.12) transparent;
+      }
+      .docs-toc::-webkit-scrollbar { width: 6px; }
+      .docs-toc::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 100px; }
+      .docs-toc::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+
+      /* Sidebar search stub — clickable, focuses the real search input. */
+      .toc-search {
+        display: flex; align-items: center; gap: 8px;
+        width: 100%; padding: 9px 12px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--fg-dim);
+        cursor: pointer;
+        font: inherit; font-size: 13px;
+        margin-bottom: 18px;
+        transition: border-color .15s, background .15s;
+      }
+      .toc-search:hover { border-color: rgba(255,255,255,0.16); background: rgba(255,255,255,0.05); }
+      .toc-search svg { color: var(--fg-dim); flex-shrink: 0; }
+      .toc-search .toc-search-text { flex: 1; text-align: left; }
+      .toc-search .kbd {
+        font-size: 11px; padding: 2px 6px;
+        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 5px; color: var(--fg-dim);
+      }
+
+      /* Collapsible sections — custom (button + panel) so we can animate
+         the open/close. Native <details> can't transition height in any
+         portable way; this uses the grid-template-rows 0fr→1fr trick. */
+      .docs-toc .toc-section { margin: 10px 0 0; }
+      .docs-toc .toc-section:first-of-type { margin-top: 0; }
+      .docs-toc .toc-subsection { margin: 6px 0 0; }
+
+      .docs-toc .toc-summary {
+        width: 100%;
+        background: none; border: none;
+        text-align: left;
+        cursor: pointer; user-select: none;
+        display: flex; align-items: center; justify-content: space-between;
+        border-radius: 7px;
+        font: inherit; color: inherit;
+        transition: background .12s, color .12s, opacity .12s;
+      }
+      .docs-toc .toc-summary::after {
+        content: '';
+        flex-shrink: 0;
+        width: 6px; height: 6px;
+        border-right: 1.5px solid currentColor;
+        border-bottom: 1.5px solid currentColor;
+        transform: rotate(-45deg);
+        transition: transform .22s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity: 0.55;
+        margin-right: 4px;
+      }
+      .docs-toc .is-open > .toc-summary::after { transform: rotate(45deg); }
+
+      .docs-toc .toc-section > .toc-summary {
+        font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase;
+        color: var(--fg-dim); font-weight: 600;
+        padding: 10px 10px 8px;
+      }
+      .docs-toc .toc-section > .toc-summary:hover {
+        color: var(--fg); background: rgba(255,255,255,0.03);
+      }
+      .docs-toc .toc-subsection > .toc-summary {
+        font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase;
+        color: var(--fg-dim); font-weight: 500;
+        padding: 8px 10px 4px;
+        opacity: 0.78;
+      }
+      .docs-toc .toc-subsection > .toc-summary:hover {
+        color: var(--fg); opacity: 1;
+      }
+
+      /* Animated panel — grid-rows trick (no JS height measuring). */
+      .docs-toc .toc-panel {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows .25s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity .22s ease;
+        opacity: 0;
+      }
+      .docs-toc .is-open > .toc-panel { grid-template-rows: 1fr; opacity: 1; }
+      .docs-toc .toc-panel-inner { overflow: hidden; min-height: 0; }
+      @media (prefers-reduced-motion: reduce) {
+        .docs-toc .toc-panel { transition: none; }
+        .docs-toc .toc-summary::after { transition: none; }
+      }
+
+      .docs-toc ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+      .docs-toc a {
+        display: flex; align-items: baseline; gap: 8px;
+        padding: 6px 10px; border-radius: 7px;
+        color: var(--fg-muted);
+        text-decoration: none;
+        line-height: 1.4;
+        transition: background .12s, color .12s;
+      }
+      .docs-toc a:hover { color: var(--fg); background: rgba(255,255,255,0.04); }
+      .docs-toc a.is-active { color: var(--mint); background: rgba(51,226,154,0.06); }
+
+      /* Command items — show CMD code as a gt-cmd pill + label. */
+      .docs-toc a.toc-cmd .toc-cmd-code {
+        display: inline-block;
+        font-family: 'Oxygen Mono', 'SFMono-Regular', Menlo, monospace;
+        font-size: 11px;
+        color: #e89a3c;
+        background: #2b1d11;
+        border: 1px solid #593815;
+        border-radius: 6px;
+        padding: 1px 6px;
+        flex-shrink: 0;
+        line-height: 1.4;
+      }
+      .docs-toc a.toc-cmd.is-stub { opacity: 0.45; cursor: default; pointer-events: none; }
+      .docs-toc a.toc-cmd .toc-cmd-label {
+        color: inherit; font-size: 13px;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      .docs-toc a.toc-cmd:hover .toc-cmd-label { color: var(--fg); }
+    }
+    @media (max-width: 1079px) { .docs-toc { display: none; } }
+
+    /* Unverified-claim banner (matches /docs/commands doc-placeholder) */
+    .claim-unverified {
+      display: inline-block;
+      font-family: 'Oxygen Mono', 'SFMono-Regular', Menlo, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #f5b463;
+      background: rgba(245, 180, 99, 0.08);
+      border: 1px dashed #8f5a1e;
+      border-radius: 6px;
+      padding: 3px 8px;
+      margin: 4px 0;
+      line-height: 1.4;
+      text-transform: uppercase;
+    }
+    .claim-unverified-block {
+      display: block;
+      font-family: 'Oxygen Mono', 'SFMono-Regular', Menlo, monospace;
+      font-size: 12px;
+      color: #f5b463;
+      background: rgba(245, 180, 99, 0.06);
+      border: 1px dashed #8f5a1e;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin: 12px 0 0;
+      line-height: 1.5;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    /* Comparison table */
+    .compare-wrap { overflow-x: auto; margin-top: 8px; }
+    .compare-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 14px; min-width: 720px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .compare-table thead th {
+      background: rgba(255,255,255,0.03);
+      color: var(--fg-dim);
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: left;
+      padding: 14px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .compare-table thead th.col-self {
+      color: var(--mint);
+      background: rgba(51,226,154,0.06);
+    }
+    .compare-table tbody th {
+      text-align: left;
+      font-weight: 500;
+      color: var(--fg);
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      white-space: nowrap;
+    }
+    .compare-table tbody td {
+      padding: 12px 14px;
+      color: var(--fg-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      white-space: nowrap;
+    }
+    .compare-table tbody td.self { color: #fff; font-weight: 600; background: rgba(51,226,154,0.04); }
+    .compare-table tbody td .yes { color: var(--mint); }
+    .compare-table tbody td .no  { color: #6a6a6a; }
+    .compare-table tbody td .maybe { color: #f5b463; }
+    .compare-table tbody tr:last-child th,
+    .compare-table tbody tr:last-child td { border-bottom: 0; }
+    .compare-note {
+      margin-top: 12px;
+      color: var(--fg-dim);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+  </style>
+<style id="gt-cmd-link-style">.gt-cmd-link{text-decoration:none}.gt-cmd-link .gt-cmd{cursor:pointer;transition:background .15s ease,border-color .15s ease}.gt-cmd-link:hover .gt-cmd{background:#3a2616;border-color:#7a4e1d}</style><style>#footer-sections{display:none!important}#gt-footer{background:#0a0a0a;color:#cfcfcf;border-top:1px solid rgba(255,255,255,0.08);font-family:'Inter','Sofia Sans',sans-serif}#gt-footer .gt-footer-bottom{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 48px 32px}#gt-footer .gt-footer-try{display:inline-block;box-sizing:border-box;background:#33E29A;color:#06160f;font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:14px;letter-spacing:0.01em;padding:9px 22px;border-radius:999px;text-decoration:none;transition:background .15s ease}#gt-footer .gt-footer-try:hover{background:#48efad;text-decoration:none}@media(min-width:641px){#gt-footer .gt-footer-nav .gt-footer-try{order:2;margin-left:16px}#gt-footer .gt-footer-nav .gt-footer-legal{order:3;margin-left:auto}}#gt-footer .gt-footer-nav{display:flex;justify-content:space-between;align-items:center;padding:18px 48px;flex-wrap:wrap;gap:12px;border-top:1px solid rgba(255,255,255,0.06)}#gt-footer .gt-footer-links{display:flex;flex-wrap:wrap;align-items:center;gap:14px 36px}#gt-footer .gt-footer-links a{color:#cfcfcf;text-decoration:none;font-size:15px;white-space:nowrap;transition:color .15s ease}#gt-footer .gt-footer-links a:hover,#gt-footer .gt-footer-legal a:hover{color:#fff;text-decoration:none}#gt-footer .gt-footer-legal a{color:#cfcfcf;text-decoration:none;font-size:15px;transition:color .15s ease}#gt-footer .gt-footer-sep{border:none;border-top:1px solid rgba(255,255,255,0.10);margin:0}#gt-footer .gt-footer-disclaimer{padding:28px 48px 44px;font-size:14px;line-height:1.65;color:#7e7e7e;max-width:820px}#gt-footer .gt-footer-copy{font-size:13px;color:#6a6a6a}@media(max-width:640px){#gt-footer .gt-footer-bottom{padding:10px 20px 28px;flex-direction:column;align-items:flex-start;gap:14px}#gt-footer .gt-footer-nav{padding:16px 20px;flex-direction:column;align-items:flex-start}#gt-footer .gt-footer-disclaimer{padding:20px 20px 32px}}</style><style>#fc-navigation{position:fixed!important;top:0!important;left:0!important;width:100%!important;height:70px!important;background:#000!important;display:flex!important;flex-wrap:nowrap!important;justify-content:flex-end;align-items:center;padding:15px 20px;z-index:99999!important;box-sizing:border-box;column-gap:20px;font-size:16px;font-family:'Inter','Sofia Sans','Helvetica',sans-serif;letter-spacing:normal;font-weight:400;-webkit-font-smoothing:antialiased;min-width:0}#fc-navigation a{color:#eaeaea;text-decoration:none;white-space:nowrap;position:relative}#fc-navigation a:hover{color:#fff}#fc-navigation a.fc-nav-active{color:#fff}#fc-navigation a.fc-nav-active::after{content:'';position:absolute;left:0;right:0;bottom:-8px;height:2px;background:#33E29A;border-radius:2px}#fc-navigation #fc-logo{width:120px;min-width:120px;margin:0 15px;height:50px;background:url('https://images.squarespace-cdn.com/content/v1/66be144e1b5d082acf687a90/caa8b98f-a00b-47a2-a28c-55b369b15630/logo.png') center/contain no-repeat;flex-shrink:0}#fc-navigation .fc-nav-primary,#fc-mobile-menu .fc-nav-primary{position:relative;background:rgba(51,226,154,0.08);color:#33E29A;border:1.5px solid rgba(51,226,154,0.3);border-radius:100px;padding:10px 20px;overflow:hidden;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:0;transition:color 0.35s,border-color 0.35s;flex-shrink:0}#fc-navigation .fc-nav-primary::before,#fc-mobile-menu .fc-nav-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#33E29A 0%,#1ecfb0 100%);transform:scaleX(0);transform-origin:left;transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);border-radius:100px;z-index:-1}#fc-navigation .fc-nav-primary:hover::before,#fc-mobile-menu .fc-nav-primary:hover::before{transform:scaleX(1)}#fc-navigation .fc-nav-primary:hover,#fc-mobile-menu .fc-nav-primary:hover{color:#000;border-color:#33E29A}#fc-navigation .fc-nav-secondary,#fc-mobile-menu .fc-nav-secondary{margin-left:5px;background:linear-gradient(135deg,#1a1a1a,#111);color:#888;border:1px solid #222;border-radius:100px;padding:10px 20px;transition:border-color 0.18s,color 0.18s;flex-shrink:0}#fc-navigation .fc-nav-secondary:hover,#fc-mobile-menu .fc-nav-secondary:hover{border-color:#444;color:#ccc}#fc-navigation #fc-hamburger{display:none;flex-shrink:0;width:42px;height:42px;background:transparent;border:1px solid rgba(255,255,255,.14);border-radius:10px;cursor:pointer;padding:0;align-items:center;justify-content:center;margin-left:4px}#fc-navigation #fc-hamburger:hover{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.04)}#fc-navigation #fc-hamburger span{display:block;position:relative;width:20px;height:2px;background:#eaeaea;border-radius:2px;transition:background-color .25s cubic-bezier(.4,0,.2,1)}#fc-navigation #fc-hamburger span::before,#fc-navigation #fc-hamburger span::after{content:'';position:absolute;left:0;width:20px;height:2px;background:#eaeaea;border-radius:2px;transition:transform .28s cubic-bezier(.4,0,.2,1),top .28s cubic-bezier(.4,0,.2,1)}#fc-navigation #fc-hamburger span::before{top:-6px}#fc-navigation #fc-hamburger span::after{top:6px}#fc-navigation #fc-hamburger.is-open span{background:transparent}#fc-navigation #fc-hamburger.is-open span::before{top:0;transform:rotate(45deg)}#fc-navigation #fc-hamburger.is-open span::after{top:0;transform:rotate(-45deg)}#fc-mobile-menu{position:fixed;top:70px;left:0;right:0;bottom:0;background:rgba(0,0,0,.98);z-index:99998;display:flex;flex-direction:column;padding:24px 24px 40px;overflow-y:auto;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s cubic-bezier(.4,0,.2,1);font-family:'Inter','Sofia Sans','Helvetica',sans-serif}#fc-mobile-menu.is-open{opacity:1;visibility:visible;pointer-events:auto}body.fc-menu-open{overflow:hidden}#fc-mobile-menu a{display:block;padding:18px 4px;color:#eaeaea;font-size:18px;font-weight:500;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.08)}#fc-mobile-menu a:hover{color:#fff}#fc-mobile-menu a.fc-nav-active{color:#33E29A}#fc-mobile-menu .fc-mm-cta{display:flex;flex-direction:column;gap:12px;margin-top:22px;padding-top:22px;border-top:1px solid rgba(255,255,255,.12)}#fc-mobile-menu .fc-mm-cta .fc-nav-primary,#fc-mobile-menu .fc-mm-cta .fc-nav-secondary{text-align:center;padding:14px 24px;font-size:16px;margin-left:0}#fc-mobile-menu .fc-mm-cta .fc-mm-demo{display:block;text-align:center;background:transparent;border:none!important;color:#eaeaea;padding:14px 24px;font-size:16px;font-weight:500}#fc-mobile-menu .fc-mm-cta .fc-mm-demo:hover{color:#fff;background:transparent}.fc-mm-trigger{display:inline-flex;align-items:center;gap:4px;cursor:pointer}.fc-mm-trigger .fc-caret{display:inline-block;border:solid #eaeaea;border-width:0 1.5px 1.5px 0;padding:3px;transform:rotate(45deg);margin-left:2px;margin-top:-3px;transition:transform .18s ease}.fc-mm-trigger[aria-expanded='true'] .fc-caret{transform:rotate(-135deg);margin-top:1px}#fc-megamenu{position:fixed;top:70px;left:0;transform:translateY(-8px);max-width:calc(100vw - 32px);background:#0a0a0a;border:1px solid #2a2a2a;border-radius:14px;padding:24px 28px;display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:32px;box-shadow:0 24px 64px rgba(0,0,0,.55);z-index:99997;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease,transform .18s ease,visibility 0s linear .18s}#fc-megamenu.is-open{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0);transition:opacity .18s ease,transform .18s ease,visibility 0s}#fc-megamenu .fc-mm-col h4{margin:0 0 10px;font-family:'Sofia Sans Semi Condensed',system-ui,sans-serif;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#9a9a9a}#fc-megamenu .fc-mm-col h4 a{color:inherit;text-decoration:none}#fc-megamenu .fc-mm-col h4 a:hover{color:#33E29A}#fc-megamenu .fc-mm-col ul{list-style:none;margin:0;padding:0}#fc-megamenu .fc-mm-col li{margin:0}#fc-megamenu .fc-mm-col a.fc-mm-link{display:block;padding:6px 8px;margin:0 -8px;color:#eaeaea;font-size:14px;line-height:1.45;text-decoration:none;border-radius:6px;transition:background .15s ease,color .15s ease}#fc-megamenu .fc-mm-col a.fc-mm-link:hover{background:rgba(51,226,154,0.08);color:#33E29A}#fc-megamenu .fc-mm-col a.fc-mm-link.is-soon{color:#888}#fc-megamenu .fc-mm-col a.fc-mm-link.is-soon:hover{background:rgba(255,255,255,0.04);color:#aaa}.fc-mm-soon{display:inline-block;margin-left:8px;padding:1px 6px;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#9a9a9a;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:4px;vertical-align:middle}#fc-mobile-menu .fc-mm-subsection{margin:6px 0 10px;padding-left:6px;border-left:1px solid rgba(255,255,255,.08)}#fc-mobile-menu .fc-mm-subsection h5{margin:8px 0 2px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#666}@media(max-width:1100px){#fc-megamenu{display:none!important}}#fc-mobile-menu .fc-mm-section{border-bottom:1px solid rgba(255,255,255,.08)}#fc-mobile-menu .fc-mm-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;padding:18px 4px;background:transparent;border:none;border-bottom:0;color:#eaeaea;font-family:'Inter','Sofia Sans','Helvetica',sans-serif;font-size:18px;font-weight:500;text-align:left;cursor:pointer}#fc-mobile-menu .fc-mm-toggle::after{content:'';width:8px;height:8px;border-right:1.5px solid #aaa;border-bottom:1.5px solid #aaa;transform:rotate(45deg);transition:transform .18s ease;margin-right:4px}#fc-mobile-menu .fc-mm-toggle[aria-expanded='true']::after{transform:rotate(-135deg);margin-top:6px}#fc-mobile-menu .fc-mm-panel{display:none;padding:0 0 10px}#fc-mobile-menu .fc-mm-panel.is-open{display:block}#fc-mobile-menu .fc-mm-section a{padding:10px 4px 10px 14px;font-size:16px;border-bottom:none;color:#d8d8d8}@media(max-width:1100px){.fc-hide-mobile{display:none!important}#fc-navigation #fc-hamburger{display:flex!important}}@media(max-width:420px){#fc-navigation{padding:12px 12px;column-gap:10px}#fc-navigation #fc-logo{width:96px;min-width:96px;margin:0 6px;height:40px}#fc-navigation .fc-nav-primary{padding:8px 14px;font-size:14px}}</style><style>html{scroll-behavior:smooth}#features,#changelog,#faq{scroll-margin-top:90px}#contact{scroll-margin-top:10px}</style><link rel="stylesheet" href="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/css2(1)"><style>#fc-demo-overlay{position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;z-index:999999!important;background:rgba(0,0,0,.75);display:flex!important;align-items:center!important;justify-content:center!important;padding:10px;box-sizing:border-box;margin:0!important;opacity:0;pointer-events:none;transition:opacity .18s ease}#fc-demo-overlay.is-open{opacity:1!important;pointer-events:auto!important}#fc-demo-modal{width:100%;max-width:980px;height:auto;max-height:94vh;background:radial-gradient(ellipse at 0% 100%,rgba(68,196,143,.15) 0%,transparent 50%),#000;border:1px solid rgba(51,226,154,.18);border-radius:18px;position:relative;box-shadow:0 32px 80px rgba(0,0,0,.8);display:flex;flex-direction:column;overflow:hidden}#fc-demo-close{position:absolute;top:14px;right:16px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;z-index:10}#fc-demo-close:hover{background:rgba(255,255,255,.12);color:#fff}.fc-dm-content{display:flex;flex:1;overflow:hidden}#fc-dm-left{flex:1;padding:28px 32px 20px;display:flex;flex-direction:column;overflow-y:auto}.fc-dm-eye{font-family:'Oxygen Mono',monospace;font-size:12px;letter-spacing:2.5px;color:#33E29A;display:block;margin-bottom:10px}.fc-dm-support{margin:14px 0 0;font-size:12px;font-weight:300;color:rgba(255,255,255,.4);font-family:'Sofia Sans Semi Condensed',system-ui,sans-serif}.fc-dm-support-footer{margin:0;padding:14px;text-align:center;border-top:1px solid rgba(255,255,255,.06)}.fc-dm-support-link{color:#33E29A;text-decoration:none}.fc-dm-support-link:hover{text-decoration:underline}#fc-dm-hs-wrap{width:100%}#fc-dm-hs-wrap iframe{width:100%!important;border:none;display:block}.fc-dm-img-wrap{position:relative;height:160px;flex-shrink:0;overflow:hidden}.fc-dm-banner{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}.fc-dm-img-fade{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,1) 100%)}#fc-dm-right{flex:1;display:flex;flex-direction:column;overflow-y:auto}.fc-dm-right-body{padding:70px 32px 32px;display:flex;flex-direction:column;flex:1;justify-content:space-between}.fc-dm-title{margin:0;font-size:24px;font-weight:700;color:#FFFFFF;font-family:'Sofia Sans Semi Condensed',system-ui,sans-serif;line-height:1.1}.fc-dm-title-sub{display:block;font-size:15px;color:#ADADAD;font-family:'Inter',sans-serif;font-weight:400;margin-top:6px;margin-bottom:12px}.fc-dm-top-group{display:flex;flex-direction:column;gap:16px}.fc-dm-trusted{flex-shrink:0;display:flex;flex-direction:column;gap:8px}.fc-dm-trusted-label{font-family:'Inter',sans-serif;font-size:13px;font-weight:400;color:#ADADAD;margin:0 0 8px;line-height:1.5}.fc-dm-trusted-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px}.fc-dm-trusted-list li{font-family:'Inter',sans-serif;font-size:16px;font-weight:400;color:#FFFFFF;display:flex;align-items:center;gap:10px}.fc-dm-trusted-list li::before{content:'✓';color:#FFFFFF;font-size:13px;flex-shrink:0}.fc-dm-trusted-sub{font-family:'Inter',sans-serif;font-size:14px;font-weight:400;color:#ADADAD;line-height:1.4;margin:0}.fc-dm-quote{padding:18px 0 14px;margin-top:0}.fc-dm-qtext{margin:0 0 10px;font-family:'Inter',sans-serif;font-size:13px;font-weight:400;font-style:italic;color:#7B7B7B;line-height:20px}.fc-dm-qaum{font-family:'Inter',sans-serif;font-size:13px;font-weight:400;color:#7B7B7B;display:block;margin-bottom:3px}.fc-dm-qsource{font-family:'Inter',sans-serif;font-size:13px;font-weight:400;color:#7B7B7B;display:block}@media(max-width:680px){#fc-demo-modal{height:auto;max-height:92vh}.fc-dm-content{flex-direction:column}#fc-dm-right{display:none}}</style><style type="text/css">html.hs-messages-widget-open.hs-messages-mobile,html.hs-messages-widget-open.hs-messages-mobile body{overflow:hidden!important;position:relative!important}html.hs-messages-widget-open.hs-messages-mobile body{height:100%!important;margin:0!important}#hubspot-messages-iframe-container{display:initial!important;z-index:2147483647;position:fixed!important;bottom:0!important}#hubspot-messages-iframe-container:hover .hs-drag-handle--v2--widget-open--left,#hubspot-messages-iframe-container:hover .hs-drag-handle--v2--widget-open--right{display:flex!important}#hubspot-messages-iframe-container.widget-align-left{left:0!important}#hubspot-messages-iframe-container.widget-align-right{right:0!important}#hubspot-messages-iframe-container.widget-align-center{left:50%!important;transform:translateX(-50%)!important}#hubspot-messages-iframe-container.internal{z-index:1111}#hubspot-messages-iframe-container.internal iframe{min-width:108px}#hubspot-messages-iframe-container .hs-shadow-container{display:initial!important;z-index:-1;position:absolute;width:0;height:0;bottom:0;content:""}#hubspot-messages-iframe-container .hs-shadow-container.internal{display:none!important}#hubspot-messages-iframe-container .hs-shadow-container.active{width:400px;height:400px}#hubspot-messages-iframe-container iframe{display:initial!important;width:100%!important;height:100%!important;border:none!important;position:absolute!important;bottom:0!important;right:0!important;background:transparent!important}#hubspot-messages-iframe-container .hs-drag-handle--v2--widget-open--right{bottom:20px;left:-5px;display:none!important}#hubspot-messages-iframe-container .hs-drag-handle--v2--widget-open--left{bottom:20px;right:-5px;display:none!important}.hs-drag-handle{position:absolute;cursor:grab;height:60px;display:none;align-items:center;transition:opacity .5s ease;transition-delay:.5s;opacity:1}.hs-drag-handle--v1--right{right:82px;bottom:12px}.hs-drag-handle--v1--left{left:82px;bottom:12px}.hs-drag-handle--v2--pill-launcher--right{bottom:20px;left:10px}.hs-drag-handle--v2--pill-launcher--left{bottom:20px;right:10px}.hs-drag-handle--v2--hidden--left,.hs-drag-handle--v2--hidden--right{opacity:0!important;pointer-events:none!important;transition:none!important}.hs-drag-overlay{position:absolute;top:0;left:0;right:0;bottom:0;user-select:none;z-index:999;display:none}@media print{#hubspot-messages-iframe-container.hs-widget-hide-on-print{display:none!important}}</style><script async="" defer="" type="text/javascript" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/enterprise.js.download"></script></head>
+
+<body><script src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/v2.js.download"></script><div id="fc-navigation"><a href="https://godelterminal.com/index.html" id="fc-logo" aria-label="Godel Terminal home"></a><button type="button" class="fc-hide-mobile fc-mm-trigger" data-mm="product" aria-haspopup="true" aria-expanded="false" aria-controls="fc-megamenu" style="background:none;border:none;color:#eaeaea;font:inherit;padding:0;letter-spacing:normal">Product<span class="fc-caret" aria-hidden="true"></span></button><button type="button" class="fc-hide-mobile fc-mm-trigger" data-mm="solutions" aria-haspopup="true" aria-expanded="false" aria-controls="fc-megamenu" style="background:none;border:none;color:#eaeaea;font:inherit;padding:0;letter-spacing:normal">Customers<span class="fc-caret" aria-hidden="true"></span></button><a class="fc-hide-mobile" data-nav="pricing" href="https://godelterminal.com/pricing/">Pricing</a><a class="fc-hide-mobile fc-nav-active" data-nav="docs" href="https://godelterminal.com/docs.html">Documentation</a><a class="fc-hide-mobile" data-nav="careers" href="https://godelterminal.com/careers.html">Careers</a><a class="fc-hide-mobile" data-nav="news" href="https://godelterminal.com/news.html">News</a><div style="flex:1"></div><a class="fc-hide-mobile" href="https://godelterminal.com/docs#demo" id="fc-nav-get-demo">Get a demo</a><a class="fc-hide-mobile fc-nav-secondary" href="https://app.godelterminal.com/?page=login" target="_blank">Login</a><a class="fc-hide-mobile fc-nav-primary" href="https://app.godelterminal.com/?page=register" target="_blank">Sign Up</a><button type="button" id="fc-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="fc-mobile-menu"><span></span></button></div>
+  <div class="grid-bg"></div>
+  <script src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/site-nav.js.download" data-current="docs" data-root="."></script>
+
+  <div class="docs-wrap">
+    <div class="docs-layout">
+
+      <!-- =============== Sidebar — Documentation TOC =============== -->
+      <aside class="docs-toc" aria-label="Documentation">
+
+        <div class="toc-section is-open">
+          <button type="button" class="toc-summary" aria-expanded="true">Getting Started</button>
+          <div class="toc-panel"><div class="toc-panel-inner">
+            <ul>
+              <li><a href="https://godelterminal.com/docs#top">Overview</a></li>
+              <li><a href="https://godelterminal.com/docs#commands">Command reference</a></li>
+              <li><a href="https://godelterminal.com/docs#shortcuts">Keyboard shortcuts</a></li>
+              <li><a href="https://godelterminal.com/pricing/">Pricing</a></li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="toc-section is-open">
+          <button type="button" class="toc-summary" aria-expanded="true">Commands</button>
+          <div class="toc-panel"><div class="toc-panel-inner">
+            <div id="toc-commands-mount"><div class="toc-subsection"><button type="button" class="toc-summary" aria-expanded="false">Company &amp; Security Analysis</button><div class="toc-panel"><div class="toc-panel-inner"><ul><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/des.html"><span class="toc-cmd-code">DES</span><span class="toc-cmd-label">Description</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/fa.html"><span class="toc-cmd-code">FA</span><span class="toc-cmd-label">Financials</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/ern.html"><span class="toc-cmd-code">ERN</span><span class="toc-cmd-label">Earnings Estimates</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/em.html"><span class="toc-cmd-code">EM</span><span class="toc-cmd-label">Earnings Matrix</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/si.html"><span class="toc-cmd-code">SI</span><span class="toc-cmd-label">Short Interest</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/gr.html"><span class="toc-cmd-code">GR</span><span class="toc-cmd-label">Ratio Analysis</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/anr.html"><span class="toc-cmd-code">ANR</span><span class="toc-cmd-label">Analyst Ratings</span></a></li><li><a class="toc-cmd is-stub"><span class="toc-cmd-code">EVT</span><span class="toc-cmd-label">Company Events</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/dvd.html"><span class="toc-cmd-code">DVD</span><span class="toc-cmd-label">Dividend Yield</span></a></li></ul></div></div></div><div class="toc-subsection"><button type="button" class="toc-summary" aria-expanded="false">Market Data &amp; Surveillance</button><div class="toc-panel"><div class="toc-panel-inner"><ul><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/qm.html"><span class="toc-cmd-code">QM</span><span class="toc-cmd-label">Quote Monitor</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/focus.html"><span class="toc-cmd-code">FOCUS</span><span class="toc-cmd-label">Focus</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/tas.html"><span class="toc-cmd-code">TAS</span><span class="toc-cmd-label">Time and Sales</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/hcp.html"><span class="toc-cmd-code">HCP</span><span class="toc-cmd-label">Historical Change %</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/wei.html"><span class="toc-cmd-code">WEI</span><span class="toc-cmd-label">World Equity Index</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/weif.html"><span class="toc-cmd-code">WEIF</span><span class="toc-cmd-label">World Equity Index Futures</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/imap.html"><span class="toc-cmd-code">IMAP</span><span class="toc-cmd-label">Intraday Market Map</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/hmap.html"><span class="toc-cmd-code">HMAP</span><span class="toc-cmd-label">Market Heatmap</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/glco.html"><span class="toc-cmd-code">GLCO</span><span class="toc-cmd-label">Global Commodity Futures</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/fx.html"><span class="toc-cmd-code">FX</span><span class="toc-cmd-label">Forex Pairs</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/most.html"><span class="toc-cmd-code">MOST</span><span class="toc-cmd-label">Most Active</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/hds.html"><span class="toc-cmd-code">HDS</span><span class="toc-cmd-label">Holders</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/n.html"><span class="toc-cmd-code">N</span><span class="toc-cmd-label">News</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/top.html"><span class="toc-cmd-code">TOP</span><span class="toc-cmd-label">Top News</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/trend.html"><span class="toc-cmd-code">TREND</span><span class="toc-cmd-label">Trending on Godel</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/halt.html"><span class="toc-cmd-code">HALT</span><span class="toc-cmd-label">Market Halts</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/allq.html"><span class="toc-cmd-code">ALLQ</span><span class="toc-cmd-label">All Quotes</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/secf.html"><span class="toc-cmd-code">SECF</span><span class="toc-cmd-label">Securities Finder</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/wji.html"><span class="toc-cmd-code">WJI</span><span class="toc-cmd-label">Wojak Index</span></a></li></ul></div></div></div><div class="toc-subsection"><button type="button" class="toc-summary" aria-expanded="false">Portfolio &amp; Risk</button><div class="toc-panel"><div class="toc-panel-inner"><ul><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/eqs.html"><span class="toc-cmd-code">EQS</span><span class="toc-cmd-label">Equity Screener</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/omon.html"><span class="toc-cmd-code">OMON</span><span class="toc-cmd-label">Option Chain</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/ovme.html"><span class="toc-cmd-code">OVME</span><span class="toc-cmd-label">Black-Scholes</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/calc.html"><span class="toc-cmd-code">CALC</span><span class="toc-cmd-label">Calculator</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/brok.html"><span class="toc-cmd-code">BROK</span><span class="toc-cmd-label">Brokerage</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/aum.html"><span class="toc-cmd-code">AUM</span><span class="toc-cmd-label">Brokerage AUM</span></a></li></ul></div></div></div><div class="toc-subsection"><button type="button" class="toc-summary" aria-expanded="false">Charting &amp; Technicals</button><div class="toc-panel"><div class="toc-panel-inner"><ul><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/g.html"><span class="toc-cmd-code">G</span><span class="toc-cmd-label">Chart</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/hms.html"><span class="toc-cmd-code">HMS</span><span class="toc-cmd-label">Historical Multiple Security</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/hp.html"><span class="toc-cmd-code">HP</span><span class="toc-cmd-label">Historical Prices</span></a></li></ul></div></div></div><div class="toc-subsection"><button type="button" class="toc-summary" aria-expanded="false">Fundamentals &amp; Filings</button><div class="toc-panel"><div class="toc-panel-inner"><ul><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/cf.html"><span class="toc-cmd-code">CF</span><span class="toc-cmd-label">Filings</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/ipo.html"><span class="toc-cmd-code">IPO</span><span class="toc-cmd-label">Initial Public Offerings</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/tran.html"><span class="toc-cmd-code">TRAN</span><span class="toc-cmd-label">Earnings Hub</span></a></li></ul></div></div></div><div class="toc-subsection"><button type="button" class="toc-summary" aria-expanded="false">Utilities &amp; System</button><div class="toc-panel"><div class="toc-panel-inner"><ul><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/help.html"><span class="toc-cmd-code">HELP</span><span class="toc-cmd-label">Help</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/chat.html"><span class="toc-cmd-code">CHAT</span><span class="toc-cmd-label">Chat</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/acm.html"><span class="toc-cmd-code">ACM</span><span class="toc-cmd-label">Account Management</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/pdf.html"><span class="toc-cmd-code">PDF</span><span class="toc-cmd-label">Settings</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/al.html"><span class="toc-cmd-code">AL</span><span class="toc-cmd-label">Alerts</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/note.html"><span class="toc-cmd-code">NOTE</span><span class="toc-cmd-label">Notes</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/ent.html"><span class="toc-cmd-code">ENT</span><span class="toc-cmd-label">Entitlements</span></a></li><li><a class="toc-cmd" href="https://godelterminal.com/docs/commands/change.html"><span class="toc-cmd-code">CHANGE</span><span class="toc-cmd-label">Changelog</span></a></li></ul></div></div></div></div>
+          </div></div>
+        </div>
+
+        <div class="toc-section">
+          <button type="button" class="toc-summary" aria-expanded="false">Troubleshooting</button>
+          <div class="toc-panel"><div class="toc-panel-inner">
+            <ul>
+              <li><a href="https://godelterminal.com/docs/troubleshooting.html">Troubleshooting overview</a></li>
+              <li><a href="https://godelterminal.com/docs/troubleshooting.html#cancelling-subscription">Cancel subscription</a></li>
+              <li><a href="https://godelterminal.com/docs/troubleshooting.html#error-code-5-aw-snap-">Error Code 5 ("Aw Snap!")</a></li>
+            </ul>
+          </div></div>
+        </div>
+
+      </aside>
+
+      <main>
+        <!-- Search bar (kept; hero copy removed per docs cleanup) -->
+        <section class="docs-search-only">
+          <div class="docs-search-wrap">
+            <label class="docs-search" aria-label="Search documentation">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--fg-dim);">
+                <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path>
+              </svg>
+              <input id="docs-search-input" type="search" placeholder="Search commands, sections, troubleshooting…" autocomplete="off">
+              <span class="kbd">⌘K</span>
+            </label>
+            <div class="docs-search-results" id="docs-search-results" role="listbox" hidden=""></div>
+          </div>
+        </section>
+
+        <!-- =============== Command Reference =============== -->
+        <!-- Pills are rendered from window.GODEL_COMMANDS by the script at
+             the end of <body>. Categories are defined there too. Ones with
+             hasDoc: true link to their /docs/commands/*.html page; ones
+             with hasDoc: false render muted and non-clickable. -->
+        <section id="commands" class="docs-section">
+          <div class="docs-section-head">
+            <h2>Command reference</h2>
+            <p>Every Godel command. Click any pill to open its full documentation.</p>
+          </div>
+          <div id="commands-grid-mount"><h3 class="cmd-cat-label">Company &amp; Security Analysis</h3><div class="cmd-grid"><a class="cmd-pill" href="https://godelterminal.com/docs/commands/des.html"><span class="cmd-pill-top"><span class="code">DES</span></span><span class="label">Description</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/fa.html"><span class="cmd-pill-top"><span class="code">FA</span></span><span class="label">Financials</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/ern.html"><span class="cmd-pill-top"><span class="code">ERN</span></span><span class="label">Earnings Estimates</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/em.html"><span class="cmd-pill-top"><span class="code">EM</span></span><span class="label">Earnings Matrix</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/si.html"><span class="cmd-pill-top"><span class="code">SI</span></span><span class="label">Short Interest</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/gr.html"><span class="cmd-pill-top"><span class="code">GR</span></span><span class="label">Ratio Analysis</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/anr.html"><span class="cmd-pill-top"><span class="code">ANR</span></span><span class="label">Analyst Ratings</span></a><div class="cmd-pill is-stub"><span class="cmd-pill-top"><span class="code">EVT</span><span class="cmd-badge soon">Coming soon</span></span><span class="label">Company Events</span></div><a class="cmd-pill" href="https://godelterminal.com/docs/commands/dvd.html"><span class="cmd-pill-top"><span class="code">DVD</span></span><span class="label">Dividend Yield</span></a></div><h3 class="cmd-cat-label">Market Data &amp; Surveillance</h3><div class="cmd-grid"><a class="cmd-pill" href="https://godelterminal.com/docs/commands/qm.html"><span class="cmd-pill-top"><span class="code">QM</span></span><span class="label">Quote Monitor</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/focus.html"><span class="cmd-pill-top"><span class="code">FOCUS</span></span><span class="label">Focus</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/tas.html"><span class="cmd-pill-top"><span class="code">TAS</span></span><span class="label">Time and Sales</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/hcp.html"><span class="cmd-pill-top"><span class="code">HCP</span></span><span class="label">Historical Change %</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/wei.html"><span class="cmd-pill-top"><span class="code">WEI</span></span><span class="label">World Equity Index</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/weif.html"><span class="cmd-pill-top"><span class="code">WEIF</span></span><span class="label">World Equity Index Futures</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/imap.html"><span class="cmd-pill-top"><span class="code">IMAP</span><span class="cmd-badge beta">Beta</span></span><span class="label">Intraday Market Map</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/hmap.html"><span class="cmd-pill-top"><span class="code">HMAP</span><span class="cmd-badge beta">Beta</span></span><span class="label">Market Heatmap</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/glco.html"><span class="cmd-pill-top"><span class="code">GLCO</span></span><span class="label">Global Commodity Futures</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/fx.html"><span class="cmd-pill-top"><span class="code">FX</span></span><span class="label">Forex Pairs</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/most.html"><span class="cmd-pill-top"><span class="code">MOST</span></span><span class="label">Most Active</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/hds.html"><span class="cmd-pill-top"><span class="code">HDS</span></span><span class="label">Holders</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/n.html"><span class="cmd-pill-top"><span class="code">N</span></span><span class="label">News</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/top.html"><span class="cmd-pill-top"><span class="code">TOP</span></span><span class="label">Top News</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/trend.html"><span class="cmd-pill-top"><span class="code">TREND</span></span><span class="label">Trending on Godel</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/halt.html"><span class="cmd-pill-top"><span class="code">HALT</span></span><span class="label">Market Halts</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/allq.html"><span class="cmd-pill-top"><span class="code">ALLQ</span></span><span class="label">All Quotes</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/secf.html"><span class="cmd-pill-top"><span class="code">SECF</span></span><span class="label">Securities Finder</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/wji.html"><span class="cmd-pill-top"><span class="code">WJI</span></span><span class="label">Wojak Index</span></a></div><h3 class="cmd-cat-label">Portfolio &amp; Risk</h3><div class="cmd-grid"><a class="cmd-pill" href="https://godelterminal.com/docs/commands/eqs.html"><span class="cmd-pill-top"><span class="code">EQS</span><span class="cmd-badge beta">Beta</span></span><span class="label">Equity Screener</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/omon.html"><span class="cmd-pill-top"><span class="code">OMON</span></span><span class="label">Option Chain</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/ovme.html"><span class="cmd-pill-top"><span class="code">OVME</span></span><span class="label">Black-Scholes</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/calc.html"><span class="cmd-pill-top"><span class="code">CALC</span></span><span class="label">Calculator</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/brok.html"><span class="cmd-pill-top"><span class="code">BROK</span></span><span class="label">Brokerage</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/aum.html"><span class="cmd-pill-top"><span class="code">AUM</span></span><span class="label">Brokerage AUM</span></a></div><h3 class="cmd-cat-label">Charting &amp; Technicals</h3><div class="cmd-grid"><a class="cmd-pill" href="https://godelterminal.com/docs/commands/g.html"><span class="cmd-pill-top"><span class="code">G</span></span><span class="label">Chart</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/hms.html"><span class="cmd-pill-top"><span class="code">HMS</span></span><span class="label">Historical Multiple Security</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/hp.html"><span class="cmd-pill-top"><span class="code">HP</span></span><span class="label">Historical Prices</span></a></div><h3 class="cmd-cat-label">Fundamentals &amp; Filings</h3><div class="cmd-grid"><a class="cmd-pill" href="https://godelterminal.com/docs/commands/cf.html"><span class="cmd-pill-top"><span class="code">CF</span></span><span class="label">Filings</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/ipo.html"><span class="cmd-pill-top"><span class="code">IPO</span></span><span class="label">Initial Public Offerings</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/tran.html"><span class="cmd-pill-top"><span class="code">TRAN</span></span><span class="label">Earnings Hub</span></a></div><h3 class="cmd-cat-label">Utilities &amp; System</h3><div class="cmd-grid"><a class="cmd-pill" href="https://godelterminal.com/docs/commands/help.html"><span class="cmd-pill-top"><span class="code">HELP</span></span><span class="label">Help</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/chat.html"><span class="cmd-pill-top"><span class="code">CHAT</span></span><span class="label">Chat</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/acm.html"><span class="cmd-pill-top"><span class="code">ACM</span></span><span class="label">Account Management</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/pdf.html"><span class="cmd-pill-top"><span class="code">PDF</span></span><span class="label">Settings</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/al.html"><span class="cmd-pill-top"><span class="code">AL</span></span><span class="label">Alerts</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/note.html"><span class="cmd-pill-top"><span class="code">NOTE</span></span><span class="label">Notes</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/ent.html"><span class="cmd-pill-top"><span class="code">ENT</span></span><span class="label">Entitlements</span></a><a class="cmd-pill" href="https://godelterminal.com/docs/commands/change.html"><span class="cmd-pill-top"><span class="code">CHANGE</span></span><span class="label">Changelog</span></a></div></div>
+        </section>
+
+        <!-- =============== Keyboard Shortcuts =============== -->
+        <section id="shortcuts" class="docs-section">
+          <div class="docs-section-head">
+            <h2>Keyboard shortcuts</h2>
+            <p>Every shortcut that works globally inside the terminal.</p>
+          </div>
+          <div class="shortcut-table-wrap">
+            <table class="shortcut-table">
+              <thead>
+                <tr><th>Shortcut</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><kbd class="kbd">`</kbd></td><td>Focus the terminal</td></tr>
+                <tr><td><kbd class="kbd">Esc</kbd> <span class="kbd-note">(double tap)</span></td><td>Close the current window</td></tr>
+                <tr><td><kbd class="kbd">Tab</kbd></td><td>Cycle through open windows</td></tr>
+                <tr><td><kbd class="kbd">Shift</kbd> + <kbd class="kbd">Tab</kbd></td><td>Cycle through open windows in reverse</td></tr>
+                <tr><td><kbd class="kbd">F1</kbd></td><td>Open <a class="gt-cmd-link" href="https://godelterminal.com/docs/commands/help.html" title="HELP command reference"><span class="gt-cmd">HELP</span></a></td></tr>
+                <tr><td><kbd class="kbd">Shift</kbd> + <kbd class="kbd">←↑→↓</kbd></td><td>Move the active window</td></tr>
+                <tr><td><kbd class="kbd">Ctrl</kbd> + <kbd class="kbd">Shift</kbd> + <kbd class="kbd">←↑→↓</kbd></td><td>Snap the active window to the edge of the screen</td></tr>
+                <tr><td><kbd class="kbd">Option</kbd> + <kbd class="kbd">←↑→↓</kbd></td><td>Resize the active window</td></tr>
+                <tr><td><kbd class="kbd">Option</kbd> + <kbd class="kbd">Shift</kbd> + <kbd class="kbd">←↑→↓</kbd></td><td>Resize the active window to the edge of the screen</td></tr>
+                <tr><td><kbd class="kbd">Ctrl</kbd> + <kbd class="kbd">Option</kbd> + <kbd class="kbd">↑</kbd></td><td>Increase terminal input + top-nav size</td></tr>
+                <tr><td><kbd class="kbd">Ctrl</kbd> + <kbd class="kbd">Option</kbd> + <kbd class="kbd">↓</kbd></td><td>Decrease terminal input + top-nav size</td></tr>
+                <tr><td><kbd class="kbd">⌘</kbd> + <kbd class="kbd">Z</kbd></td><td>Undo last window close</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- =============== API access (lead capture) =============== -->
+        <section class="docs-section">
+          <div class="api-cta">
+            <div>
+              <h3>Looking for API access?</h3>
+              <p>We offer REST and WebSocket access to enterprise customers on a
+                 case-by-case basis. Talk to our sales team about pricing,
+                 entitlements, and integration support.</p>
+            </div>
+            <a class="btn-ghost-mint" href="https://godelterminal.com/docs#demo">Contact sales →</a>
+          </div>
+        </section>
+
+        <!-- =============== Demo CTA — same shape as API access =============== -->
+        <section class="docs-section">
+          <div class="api-cta">
+            <div>
+              <h3>Want to see Godel in action?</h3>
+              <p>We'll walk through the commands your team uses heavily, confirm
+                 coverage, and answer pricing questions. ~10 minutes.</p>
+            </div>
+            <a class="btn-ghost-mint" href="https://godelterminal.com/docs#demo">Book a demo →</a>
+          </div>
+        </section>
+
+        <p style="margin: 28px 0 8px; font-size: 13px; color: var(--fg-dim); text-align: center;">
+          Running into an error? See <a href="https://godelterminal.com/docs/troubleshooting.html" style="color: var(--mint); text-decoration: underline;">Troubleshooting</a>.
+        </p>
+      </main>
+    </div>
+  </div>
+
+  <style>
+    /* Kill any tail whitespace below the footer + paint body dark so it blends */
+    html, body { margin-bottom: 0 !important; background: #000 !important; overscroll-behavior-y: none !important; overscroll-behavior: none !important; }
+    body { padding-bottom: 0 !important; height: auto !important; min-height: 0 !important; }
+    #siteWrapper { padding-bottom: 0 !important; margin-bottom: 0 !important; background: #000 !important; height: auto !important; min-height: 0 !important; }
+    #gt-footer { margin-bottom: 0 !important; }
+  </style>
+  <script src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/site-footer.js.download" data-root="."></script>
+<script type="text/javascript" id="hs-script-loader" async="" defer="" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/45198047(1).js.download"></script>
+  <script src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/demo-modal.js.download" data-root="."></script>
+
+  <!-- Live docs search + command grid renderer. Depends on commands.js. -->
+  <script src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/commands.js.download"></script>
+  <script>
+  /* Render the command reference grid from window.GODEL_COMMANDS.
+     Categories live here, not in the manifest, so reorg is easy. */
+  (function () {
+    var mount = document.getElementById('commands-grid-mount');
+    var all   = window.GODEL_COMMANDS || [];
+    if (!mount || !all.length) return;
+
+    /* Category order mirrors the reader's workflow: learn about a security
+       (DES), watch multiple (QM), then drill into research, screening,
+       charting, filings, and finally tooling. */
+    var CATS = [
+      { label: "Company & Security Analysis",
+        cmds: ["DES", "FA", "ERN", "EM", "SI", "GR", "ANR", "EVT", "DVD"] },
+      { label: "Market Data & Surveillance",
+        cmds: ["QM", "FOCUS", "TAS", "HCP", "WEI", "WEIF", "IMAP", "HMAP", "GLCO", "FX",
+               "MOST", "HDS", "N", "TOP", "TREND", "HALT", "ALLQ", "SECF",
+               "WJI"] },
+      { label: "Portfolio & Risk",
+        cmds: ["EQS", "OMON", "OVME", "CALC", "BROK", "AUM"] },
+      { label: "Charting & Technicals",
+        cmds: ["G", "HMS", "HP"] },
+      { label: "Fundamentals & Filings",
+        cmds: ["CF", "IPO", "TRAN"] },
+      { label: "Utilities & System",
+        cmds: ["HELP", "CHAT", "ACM", "PDF", "AL", "NOTE", "ENT", "CHANGE"] }
+    ];
+
+    var byCmd = {};
+    all.forEach(function (c) { byCmd[c.cmd] = c; });
+
+    function esc(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function pill(c) {
+      var tag = c.hasDoc ? 'a'       : 'div';
+      var href = c.hasDoc ? ' href="docs/commands/' + c.slug + '.html"' : '';
+      var cls = c.hasDoc ? 'cmd-pill' : 'cmd-pill is-stub';
+      var badge = c.badge
+        ? '<span class="cmd-badge ' + (/beta/i.test(c.badge) ? 'beta' : 'soon') + '">' + esc(c.badge) + '</span>'
+        : '';
+      return '<' + tag + ' class="' + cls + '"' + href + '>' +
+               '<span class="cmd-pill-top">' +
+                 '<span class="code">' + esc(c.cmd) + '</span>' + badge +
+               '</span>' +
+               '<span class="label">' + esc(c.label) + '</span>' +
+             '</' + tag + '>';
+    }
+
+    var html = '';
+    CATS.forEach(function (cat) {
+      var items = cat.cmds.map(function (x) { return byCmd[x]; }).filter(Boolean);
+      if (!items.length) return;
+      html += '<h3 class="cmd-cat-label">' + esc(cat.label) + '</h3>';
+      html += '<div class="cmd-grid">' + items.map(pill).join('') + '</div>';
+    });
+
+    mount.innerHTML = html;
+
+    /* Sidebar — same CATS source so the sidebar stays in lockstep with the
+       command grid. Each command becomes a link to its /docs/commands/*.html
+       (or a muted stub when hasDoc is false). */
+    var sidebar = document.getElementById('toc-commands-mount');
+    if (sidebar) {
+      var sbHtml = '';
+      CATS.forEach(function (cat) {
+        var items = cat.cmds.map(function (x) { return byCmd[x]; }).filter(Boolean);
+        if (!items.length) return;
+        sbHtml += '<div class="toc-subsection">';
+        sbHtml +=   '<button type="button" class="toc-summary" aria-expanded="false">' + esc(cat.label) + '</button>';
+        sbHtml +=   '<div class="toc-panel"><div class="toc-panel-inner"><ul>';
+        items.forEach(function (c) {
+          var stub = c.hasDoc ? '' : ' is-stub';
+          var href = c.hasDoc ? ' href="docs/commands/' + c.slug + '.html"' : '';
+          sbHtml +=
+            '<li><a class="toc-cmd' + stub + '"' + href + '>' +
+              '<span class="toc-cmd-code">' + esc(c.cmd) + '</span>' +
+              '<span class="toc-cmd-label">' + esc(c.label) + '</span>' +
+            '</a></li>';
+        });
+        sbHtml +=   '</ul></div></div>';
+        sbHtml += '</div>';
+      });
+      sidebar.innerHTML = sbHtml;
+    }
+  })();
+
+  /* Sidebar collapsibles — single delegated click handler. */
+  (function () {
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('.docs-toc .toc-summary');
+      if (!btn) return;
+      var group = btn.parentElement;
+      if (!group) return;
+      var open = group.classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  })();
+
+  </script>
+
+  <!-- Live docs search — ranks over commands + sections + pages. ⌘K to focus. -->
+  <script>
+  (function () {
+    var input   = document.getElementById('docs-search-input');
+    var results = document.getElementById('docs-search-results');
+    var commands = window.GODEL_COMMANDS || [];
+    if (!input || !results) return;
+
+    /* Section / page index — hand-curated so search surfaces non-command
+       content like "troubleshooting", "keyboard shortcuts", etc. */
+    var TOPICS = [
+      { kind: 'section', title: 'Getting Started',       url: '#getting-started',
+        keywords: 'getting started quickstart first command layout sign up signup account new user onboard' },
+      { kind: 'section', title: 'Workflows',             url: '#workflows',
+        keywords: 'workflow options chains sec edgar news real-time market data fundamentals' },
+      { kind: 'section', title: 'Command Reference',     url: '#commands',
+        keywords: 'command list reference every command commands cheat sheet' },
+      { kind: 'section', title: 'Keyboard Shortcuts',    url: '#shortcuts',
+        keywords: 'keyboard shortcut shortcuts hotkey hotkeys esc tab f1 arrow cmd ctrl option shift' },
+      { kind: 'section', title: 'Switching from Bloomberg / Koyfin / TradingView / FactSet / Refinitiv',
+        url: '#switching',
+        keywords: 'bloomberg koyfin tradingview factset refinitiv alternative migrate migration switch switching compare comparison' },
+      { kind: 'section', title: 'For RIAs, Hedge Funds & Family Offices', url: '#audience',
+        keywords: 'ria rias hedge fund funds family office offices institutional professional wealth management' },
+      { kind: 'section', title: 'API access (Contact Sales)', url: 'contact.html',
+        keywords: 'api rest websocket programmatic integration enterprise access endpoint contact sales pricing' },
+      { kind: 'page',    title: 'Troubleshooting',        url: 'docs/troubleshooting.html',
+        keywords: 'troubleshooting troubleshoot error errors aw snap crash cancel subscription billing support help fix fixes problem issue' },
+      { kind: 'page',    title: 'Cancelling your subscription', url: 'docs/troubleshooting.html#cancelling-subscription',
+        keywords: 'cancel cancelling cancellation subscription billing stripe refund acm account management' },
+      { kind: 'page',    title: 'Error Code 5 ("Aw Snap!")', url: 'docs/troubleshooting.html#error-code-5-aw-snap-',
+        keywords: 'error code 5 aw snap crash memory browser extensions tabs reload' }
+    ];
+
+    var filtered = [];   // rendered rows, each { type, item }
+    var activeIdx = -1;
+
+    function esc(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    /* Scoring: exact cmd beats starts-with beats contains. Topic-title
+       matches rank similarly; keyword matches rank lower (fuzzier). */
+    function scoreCommand(c, q) {
+      var code  = c.cmd.toLowerCase();
+      var label = (c.label || '').toLowerCase();
+      var blurb = (c.blurb || '').toLowerCase();
+      if (code === q)            return 120;
+      if (code.indexOf(q) === 0) return 75;
+      if (code.indexOf(q) > -1)  return 50;
+      if (label.toLowerCase().indexOf(q) === 0) return 40;
+      if (label.toLowerCase().indexOf(q) > -1)  return 22;
+      if (blurb.indexOf(q) > -1)  return 8;
+      return 0;
+    }
+
+    function scoreTopic(t, q) {
+      var title = (t.title || '').toLowerCase();
+      var keys  = (t.keywords || '').toLowerCase();
+      if (title === q) return 110;
+      // word-boundary starts-with
+      var words = title.split(/\s+/);
+      for (var i = 0; i < words.length; i++) {
+        if (words[i].indexOf(q) === 0) return 60;
+      }
+      if (title.indexOf(q) > -1) return 35;
+      // keyword-level match: word-start preferred
+      var kws = keys.split(/\s+/);
+      for (var j = 0; j < kws.length; j++) {
+        if (kws[j] === q) return 28;
+        if (kws[j].indexOf(q) === 0) return 20;
+      }
+      if (keys.indexOf(q) > -1) return 10;
+      return 0;
+    }
+
+    function render(query) {
+      var q = (query || '').trim().toLowerCase();
+      if (!q) {
+        filtered = [];
+        activeIdx = -1;
+        results.hidden = true;
+        results.innerHTML = '';
+        return;
+      }
+
+      var cmdHits = commands
+        .map(function (c) { return { type: 'cmd', item: c, s: scoreCommand(c, q) }; })
+        .filter(function (x) { return x.s > 0; });
+      var topicHits = TOPICS
+        .map(function (t) { return { type: 'topic', item: t, s: scoreTopic(t, q) }; })
+        .filter(function (x) { return x.s > 0; });
+
+      filtered = cmdHits.concat(topicHits)
+        .sort(function (a, b) { return b.s - a.s; })
+        .slice(0, 12);
+
+      results.hidden = false;
+      if (!filtered.length) {
+        activeIdx = -1;
+        results.innerHTML =
+          '<div class="docs-search-empty">No matches for "' + esc(query) + '"</div>';
+        return;
+      }
+
+      activeIdx = 0;
+      results.innerHTML = filtered.map(function (row, i) {
+        var active = i === 0 ? ' is-active' : '';
+        if (row.type === 'cmd') {
+          var c = row.item;
+          return '<a class="docs-search-result' + active + '" ' +
+                 'href="docs/commands/' + c.slug + '.html" data-idx="' + i + '">' +
+                   '<span class="gt-cmd">' + esc(c.cmd) + '</span>' +
+                   '<span class="meta">' +
+                     '<span class="title">' + esc(c.label) + '</span>' +
+                     '<span class="blurb">' + esc(c.blurb) + '</span>' +
+                   '</span>' +
+                 '</a>';
+        }
+        var t = row.item;
+        return '<a class="docs-search-result docs-search-result--topic' + active + '" ' +
+               'href="' + t.url + '" data-idx="' + i + '">' +
+                 '<span class="meta">' +
+                   '<span class="title">' + esc(t.title) + '</span>' +
+                 '</span>' +
+               '</a>';
+      }).join('');
+    }
+
+    function setActive(i) {
+      activeIdx = i;
+      var rows = results.querySelectorAll('.docs-search-result');
+      rows.forEach(function (el, idx) { el.classList.toggle('is-active', idx === activeIdx); });
+      var cur = results.querySelector('.is-active');
+      if (cur) cur.scrollIntoView({ block: 'nearest' });
+    }
+
+    function chosenUrl() {
+      var row = filtered[activeIdx];
+      if (!row) return null;
+      return row.type === 'cmd' ? 'docs/commands/' + row.item.slug + '.html' : row.item.url;
+    }
+
+    input.addEventListener('input', function (e) { render(e.target.value); });
+
+    input.addEventListener('keydown', function (e) {
+      if (results.hidden) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (filtered.length) setActive(Math.min(activeIdx + 1, filtered.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (filtered.length) setActive(Math.max(activeIdx - 1, 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        var url = chosenUrl();
+        if (url) window.location.href = url;
+      } else if (e.key === 'Escape') {
+        input.blur(); results.hidden = true;
+      }
+    });
+
+    results.addEventListener('mousemove', function (e) {
+      var row = e.target.closest('.docs-search-result');
+      if (!row) return;
+      var i = parseInt(row.getAttribute('data-idx'), 10);
+      if (i !== activeIdx) setActive(i);
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.docs-search-wrap')) results.hidden = true;
+    });
+
+    /* ⌘K / Ctrl+K focuses the search. */
+    document.addEventListener('keydown', function (e) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        input.focus(); input.select();
+      }
+    });
+  })();
+  </script>
+<script type="module" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;e110c09b3efe47e590ce815ffd950756&quot;}" crossorigin="anonymous" data-hubspot-rendered="true"></script>
+
+
+<footer id="gt-footer"><div class="gt-footer-nav"><div class="gt-footer-links"><a href="https://godelterminal.com/referral.html">Referral Program</a><a href="https://godelterminal.com/careers.html">Careers</a><a href="https://docs.godelterminal.com/" target="_blank" rel="noopener">Documentation</a><a href="https://godelterminal.com/contact.html">Contact</a><a href="https://godelterminal.com/newsletter/">Newsletter</a></div><div class="gt-footer-legal"><a href="https://godelterminal.com/terms.html">Terms of Service</a><span style="margin:0 10px;opacity:0.4;">|</span><a href="https://godelterminal.com/privacypolicy.html">Privacy Policy</a><span style="margin:0 10px;opacity:0.4;">|</span><a href="https://godelterminal.com/cookies.html">Cookies</a></div><a class="gt-footer-try" href="https://app.godelterminal.com/?page=register" target="_blank" rel="noopener">Try It Now</a></div><hr class="gt-footer-sep"><div class="gt-footer-disclaimer">Disclaimer: The information provided on this website by DL Software dba Godel Terminal is strictly for informational purposes only and should not be construed as an offer to sell, a solicitation to buy, or a recommendation for any security or strategy. DL Software dba Godel Terminal is not a broker or registered investment advisor, and we are not registered with any financial or securities regulatory authority to give financial and investment advice. While we make every effort to maintain the accuracy and timeliness of information, we cannot guarantee its absolute accuracy. We strongly recommend conducting personal research or consulting a qualified financial advisor before making any investment decisions. Trading in financial markets involves significant risk, and past performance does not guarantee future results. DL Software dba Godel Terminal, its employees, or its affiliates will not be held liable for any losses or damages arising from the use of any information on this website. Use of this website signifies your agreement to this disclaimer.</div><div class="gt-footer-bottom"><div class="gt-footer-copy">DL Software © 2026. All rights reserved.</div></div></footer><div id="fc-megamenu" role="menu" aria-hidden="true" style="grid-template-columns: repeat(1, minmax(180px, 1fr)); width: 280px; left: 282px;" class=""><div class="fc-mm-col"><h4>Customers</h4><ul><li><a class="fc-mm-link" href="https://godelterminal.com/wealth-teams-family-offices/">Wealth Teams &amp; Family Offices</a></li><li><a class="fc-mm-link" href="https://godelterminal.com/hedge-funds-portfolio-managers/">Hedge Fund &amp; Portfolio Managers</a></li><li><a class="fc-mm-link" href="https://godelterminal.com/equity-research/">Equity Research</a></li><li><a class="fc-mm-link" href="https://godelterminal.com/corporates-investor-relations/">Corporates &amp; Investor Relations</a></li><li><a class="fc-mm-link" href="https://godelterminal.com/traders/">Traders &amp; Individuals</a></li></ul></div></div><nav id="fc-mobile-menu" aria-hidden="true"><a class="" data-nav="pricing" href="https://godelterminal.com/pricing/">Pricing</a><a class=" fc-nav-active" data-nav="docs" href="https://godelterminal.com/docs.html">Documentation</a><a class="" data-nav="careers" href="https://godelterminal.com/careers.html">Careers</a><a class="" data-nav="news" href="https://godelterminal.com/news.html">News</a><div class="fc-mm-section"><button type="button" class="fc-mm-toggle" aria-expanded="false" aria-controls="fc-mm-panel-product">Product</button><div class="fc-mm-panel" id="fc-mm-panel-product"><a href="https://godelterminal.com/real-time-market-news/">Real-Time News</a><a href="https://godelterminal.com/real-time-quotes/">Real-Time Quotes</a><a href="https://godelterminal.com/sec-filings/">SEC Filings</a><a href="https://godelterminal.com/financial-terminal/">Financial Terminal</a><a href="https://godelterminal.com/asset-classes-data-coverage/">Asset Classes &amp; Data Coverage</a></div></div><div class="fc-mm-section"><button type="button" class="fc-mm-toggle" aria-expanded="false" aria-controls="fc-mm-panel-solutions">Customers</button><div class="fc-mm-panel" id="fc-mm-panel-solutions"><a href="https://godelterminal.com/wealth-teams-family-offices/">Wealth Teams &amp; Family Offices</a><a href="https://godelterminal.com/hedge-funds-portfolio-managers/">Hedge Fund &amp; Portfolio Managers</a><a href="https://godelterminal.com/equity-research/">Equity Research</a><a href="https://godelterminal.com/corporates-investor-relations/">Corporates &amp; Investor Relations</a><a href="https://godelterminal.com/traders/">Traders &amp; Individuals</a></div></div><div class="fc-mm-cta"><a class="fc-mm-demo" href="https://godelterminal.com/docs#demo" id="fc-mm-demo">Get a demo</a><a class="fc-nav-secondary" href="https://app.godelterminal.com/?page=login" target="_blank">Login</a><a class="fc-nav-primary" href="https://app.godelterminal.com/?page=register" target="_blank">Sign Up</a></div></nav><div id="fc-demo-overlay"><div id="fc-demo-modal" role="dialog" aria-modal="true"><button id="fc-demo-close" aria-label="Close">×</button><div class="fc-dm-content"><div id="fc-dm-left"><div id="fc-dm-hs-wrap" data-hs-forms-root="true"><div class="hs-form-frame" data-portal-id="45198047" data-form-id="7a5a0b9b-d4fc-4ffd-8d5d-d1d853c40a5b" data-region="na1" data-target="#fc-dm-hs-wrap" data-css="body,form,.hbspt-form,.hs-form{background:#111!important;color:#eaeaea!important}label,.hs-field-desc{font-family:&#39;Oxygen Mono&#39;,monospace!important;font-size:10px!important;letter-spacing:1.5px!important;color:rgba(255,255,255,.35)!important;text-transform:uppercase!important;display:block!important;margin-bottom:5px!important}input[type=text],input[type=email],input[type=tel],select,textarea{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:8px!important;padding:10px 12px!important;font-size:15px!important;color:#eaeaea!important;width:100%!important;box-sizing:border-box!important;font-family:&#39;Sofia Sans Semi Condensed&#39;,system-ui,sans-serif!important}input[type=text]:focus,input[type=email]:focus,input[type=tel]:focus,select:focus,textarea:focus{border-color:rgba(51,226,154,.4)!important;outline:none!important}input[type=submit],.hs-button{background:#33E29A!important;color:#0a0a0a!important;border:none!important;border-radius:9px!important;padding:13px 20px!important;font-family:&#39;Oxygen Mono&#39;,monospace!important;font-size:12px!important;letter-spacing:1px!important;font-weight:700!important;width:100%!important;cursor:pointer!important;margin-top:6px!important}input[type=submit]:hover,.hs-button:hover{background:#4debb0!important}fieldset{max-width:100%!important;border:none!important;padding:0!important;margin:0 0 14px!important}.hbspt-form,.hs-form-private,.hsfc-Form{border:none!important;box-shadow:none!important}.hs-richtext{display:none!important}.hs-error-msgs,.hs-error-msg{color:#ff6b6b!important;list-style:none!important;padding:0!important;margin:4px 0 0!important}.submitted-message{color:#33E29A!important;font-family:&#39;Oxygen Mono&#39;,monospace!important;font-size:14px!important;text-align:center!important;padding:20px 0!important}.grecaptcha-badge{filter:invert(1) brightness(.6)!important}" style="height: 507px;"><iframe src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/frame.html" data-test-id="embedded-form-7a5a0b9b-d4fc-4ffd-8d5d-d1d853c40a5b" title="Form" scrolling="no" style="border-width: medium; border-style: none; border-color: currentcolor; border-image: none; height: 100%; width: 100%;"></iframe></div><script src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/45198047(2).js.download" defer=""></script></div></div><div id="fc-dm-right"><div class="fc-dm-right-body"><div class="fc-dm-top-group"><div><h2 class="fc-dm-title">Reach out to our sales team</h2><span class="fc-dm-title-sub">We'll respond within 24 hours.</span></div><div class="fc-dm-trusted"><p class="fc-dm-trusted-label">See how the following firms get real-time coverage on their universe:</p><ul class="fc-dm-trusted-list"><li>Hedge Funds</li><li>Family Offices</li><li>RIAs</li><li>Banks</li><li>Fortune 500 companies</li></ul></div><div class="fc-dm-quote"><div class="fc-dm-qtext-wrap"><p class="fc-dm-qtext">“I've been using Godel every day for research, market data, and option chain data. Fundamentals, options chain positioning, and market data to monitor the industries in my coverage area. Just the simple stuff that matters, all in one place.”</p></div><span class="fc-dm-qaum">$350M AUM</span><span class="fc-dm-qsource">Equity-focused Hedge Fund — Feb 2026</span></div></div></div></div></div></div></div><iframe owner="archetype" title="archetype" style="display: none; visibility: hidden;" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/saved_resource(4).html"></iframe><div role="region" aria-label="Chat Widget" id="hubspot-messages-iframe-container" class="widget-align-right" style="color-scheme: light; min-height: 96px; min-width: 100px; width: 92px; height: 92px;"><div class="hs-shadow-container"></div><iframe src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/4a08376bafc444b9ba3d9431bfcf8e25.html" id="hubspot-conversations-iframe" title="Chat Widget" allowfullscreen="" data-test-id="chat-widget-iframe"></iframe></div><div id="hs-forms-embed-frame-recaptcha_1786608799294" style="display: none; width: 0px; height: 0px;"><div class="grecaptcha-badge" data-style="inline" style="width: 256px; height: 60px; box-shadow: gray 0px 0px 5px;"><div class="grecaptcha-logo"><iframe title="reCAPTCHA" width="256" height="60" role="presentation" name="a-wdttacwsgjgb" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox allow-storage-access-by-user-activation" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/anchor(1).html"></iframe></div><div class="grecaptcha-error"></div><textarea id="g-recaptcha-response" name="g-recaptcha-response" class="g-recaptcha-response" style="width: 250px; height: 40px; border: 1px solid rgb(193, 193, 193); margin: 10px 25px; padding: 0px; resize: none; display: none;"></textarea></div><iframe style="display: none;" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/saved_resource(5).html"></iframe></div><div style="visibility: hidden; position: absolute; width: 100%; top: -10000px; left: 0px; right: 0px; transition: visibility linear 0.3s, opacity 0.3s linear; opacity: 0;"><div style="width: 100%; height: 100%; position: fixed; top: 0px; left: 0px; z-index: 2000000000; background-color: rgb(255, 255, 255); opacity: 0.5;"></div><div style="margin: 0px auto; top: 0px; left: 0px; right: 0px; position: fixed; border: 1px solid rgb(204, 204, 204); z-index: 2000000000; background-color: rgb(255, 255, 255);"><iframe title="recaptcha challenge expires in two minutes" name="c-wdttacwsgjgb" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox allow-storage-access-by-user-activation" src="./Godel Terminal — the $996_yr Bloomberg terminal alternative, documented_files/bframe(1).html" style="width: 100%; height: 100%;"></iframe></div></div></body></html>

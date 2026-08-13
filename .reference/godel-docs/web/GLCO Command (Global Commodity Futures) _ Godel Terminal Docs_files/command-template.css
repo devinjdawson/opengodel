@@ -1,0 +1,635 @@
+/* Shared styling for /docs/commands/*.html pages. Dark theme, mint/amber
+   accents, typography matching the rest of the site. */
+
+*, *::before, *::after { box-sizing: border-box; }
+h1, h2, h3, h4 { font-family: 'Sofia Sans Semi Condensed', system-ui, 'Inter', sans-serif; font-weight: 600; margin: 0; letter-spacing: -0.02em; }
+a { color: inherit; text-decoration: none; }
+
+/* Cross-document fade when navigating between docs pages. Modern
+   browsers (Chrome 126+, Safari 18+) use the View Transitions API;
+   everyone else gets the CSS keyframes fallback on initial paint. */
+@view-transition { navigation: auto; }
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+@supports not (view-transition-name: none) {
+  .doc-wrap { animation: doc-fade-in 280ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+}
+@keyframes doc-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+:root {
+  --bg: #000;
+  --mint: #33E29A;
+  --mint-dim: rgba(51,226,154,0.10);
+  --mint-border: rgba(51,226,154,0.32);
+  --amber-text: #e89a3c;
+  --amber-bg:   #2b1d11;
+  --amber-bd:   #593815;
+  --fg: #eaeaea;
+  --fg-muted: #B6B6B6;
+  --fg-dim: #888;
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.14);
+  --card-g1: #141414;
+  --card-g2: #0b0b0b;
+  --card-g3: #070707;
+}
+
+.grid-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+  background-size: 120px 120px;
+}
+
+/* ---- Layout ----------------------------------------------------- */
+.doc-wrap {
+  position: relative; z-index: 1;
+  max-width: 860px; margin: 0 auto; padding: 48px 28px 120px;
+}
+
+/* ---- Breadcrumb ------------------------------------------------- */
+.doc-crumbs {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--fg-muted); margin-bottom: 24px;
+}
+.doc-crumbs a { color: var(--fg-muted); transition: color .2s; }
+.doc-crumbs a:hover { color: var(--mint); }
+.doc-crumbs .sep { opacity: 0.5; }
+.doc-crumbs .current { color: var(--fg); }
+
+/* ---- Hero ------------------------------------------------------- */
+.doc-hero { margin-bottom: 32px; }
+/* The "Command" eyebrow pill was intentionally removed — the amber
+   code pill in the H1 already signals what this page is. */
+.doc-eyebrow { display: none; }
+.doc-h1 {
+  font-size: clamp(30px, 4vw, 48px); line-height: 1.1;
+  color: #fff; font-weight: 700; display: flex; align-items: center; gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ---- Terminal-syntax pills ---------------------------------------
+   Four colored variants matching the in-product syntax guideline:
+     default / .gt-cmd        → amber   → Command
+     .gt-cmd--geo              → green   → Country / Instrument code
+     .gt-cmd--asset            → blue    → Asset class code
+     .gt-cmd--ticker           → neutral → Ticker / identifier / descriptor
+   Multi-token backtick blocks are split by the Notion-md converter so
+   each token lands in its own color. */
+.gt-cmd {
+  display: inline-block;
+  color: var(--amber-text);
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-bd);
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-family: "Oxygen Mono", monospace;
+  font-size: 12px;
+  font-weight: 400;
+  vertical-align: middle;
+  line-height: 1.3;
+}
+.gt-cmd.gt-cmd-lg {
+  font-size: 18px; padding: 4px 12px; border-radius: 8px; line-height: 1.2;
+}
+.gt-cmd--geo {
+  color: #6ac193;
+  background: rgba(106,193,147,0.10);
+  border-color: rgba(106,193,147,0.32);
+}
+.gt-cmd--asset {
+  color: #6c9ad8;
+  background: rgba(108,154,216,0.10);
+  border-color: rgba(108,154,216,0.32);
+}
+.gt-cmd--ticker {
+  color: #eaeaea;
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.14);
+}
+
+/* ---- Body prose ------------------------------------------------- */
+.doc-body { color: var(--fg); font-size: 16px; line-height: 1.7; }
+
+.doc-body h2 {
+  font-size: clamp(22px, 2.3vw, 28px); color: #fff;
+  margin: 48px 0 16px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--border);
+}
+.doc-body h3 {
+  font-size: 18px; color: #fff;
+  margin: 32px 0 10px; font-weight: 600;
+}
+.doc-body h4 {
+  font-size: 15px; color: var(--fg-muted);
+  margin: 20px 0 8px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+
+.doc-body p { margin: 0 0 14px; color: rgba(234,234,234,0.86); }
+.doc-body p.doc-caption {
+  color: var(--fg-dim); font-size: 13px; text-align: center;
+  margin: -10px 0 22px;
+}
+
+.doc-body strong { color: #fff; font-weight: 600; }
+.doc-body em     { color: inherit; }
+.doc-body a {
+  color: var(--mint); border-bottom: 1px solid rgba(51,226,154,0.25);
+  transition: border-color .15s;
+}
+.doc-body a:hover { border-color: var(--mint); }
+
+.doc-body ul { padding-left: 22px; margin: 0 0 18px; }
+.doc-body li { margin-bottom: 8px; color: rgba(234,234,234,0.86); }
+
+.doc-body del { color: var(--fg-dim); }
+
+/* Definition list — emitted when the converter detects consecutive
+   "**Label:** content" paragraphs. Turns loose prose into a scannable
+   key/value block. */
+.doc-body dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 20px; row-gap: 10px;
+  margin: 20px 0;
+  padding: 18px 22px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+}
+.doc-body dt {
+  color: #fff; font-weight: 600; font-size: 14px;
+  align-self: baseline; white-space: nowrap;
+}
+.doc-body dd {
+  color: rgba(234,234,234,0.80);
+  font-size: 14px; line-height: 1.55;
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .doc-body dl { grid-template-columns: 1fr; gap: 10px; }
+  .doc-body dt { margin-top: 6px; }
+}
+
+/* ---- Figures / images ------------------------------------------ */
+.doc-img, .doc-figure img {
+  display: block; width: 100%; max-width: 100%;
+  border: 1px solid var(--border-strong); border-radius: 10px;
+  margin: 20px 0;
+  background: #0a0a0a;
+}
+.doc-figure { margin: 24px 0; }
+.doc-figure figcaption {
+  color: var(--fg-dim); font-size: 13px; text-align: center;
+  margin-top: 8px;
+}
+
+/* Compact horizontal image rail for command pages with many small state images. */
+.doc-state-rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(178px, 1fr);
+  gap: 12px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: inline mandatory;
+  padding: 4px 2px 14px;
+  margin: 18px 0 28px;
+}
+.doc-state-card {
+  scroll-snap-align: start;
+  min-height: 250px;
+  padding: 14px 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.025);
+}
+.doc-state-card img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 142px;
+  object-fit: contain;
+  margin: 12px auto 0;
+}
+.doc-state-title {
+  display: block;
+  color: #fff;
+  font-family: "Oxygen Mono", monospace;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.doc-state-rule {
+  display: block;
+  color: var(--fg-muted);
+  font-size: 13px;
+  line-height: 1.35;
+  margin-top: 5px;
+}
+.doc-state-card.is-green { border-color: rgba(64,143,104,0.34); }
+.doc-state-card.is-pink { border-color: rgba(255,78,103,0.28); }
+.doc-state-card.is-neutral { border-color: rgba(255,255,255,0.14); }
+@media (max-width: 640px) {
+  .doc-state-rail { grid-auto-columns: minmax(156px, 72%); }
+  .doc-state-card { min-height: 236px; }
+  .doc-state-card img { height: 132px; }
+}
+
+/* Video embeds disabled for now — placeholders only. */
+.doc-video { display: none; }
+
+/* ---- LLM lede (first-sentence definition) ------------------------ */
+.doc-lede {
+  font-size: 17px; line-height: 1.65; color: #eaeaea;
+  margin: 0 0 28px; padding: 18px 22px;
+  background: rgba(51,226,154,0.04);
+  border: 1px solid rgba(51,226,154,0.20);
+  border-radius: 12px;
+}
+.doc-lede strong { color: #fff; font-weight: 600; }
+.doc-lede-bbg { color: var(--mint); }
+
+/* ---- Placeholder tokens ([PUT X HERE ONCE CONFIRMED]) ----------- */
+.doc-placeholder {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(233, 184, 110, 0.10);
+  border: 1px dashed rgba(233, 184, 110, 0.40);
+  color: #e9b86e;
+  font-family: "Oxygen Mono", monospace; font-size: 13px;
+  border-radius: 5px;
+}
+p.doc-placeholder {
+  display: block; padding: 14px 18px; line-height: 1.55;
+}
+
+/* ---- Related commands -------------------------------------------- */
+.doc-related {
+  margin-top: 56px; padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+.doc-related h2 { font-size: clamp(22px, 2.3vw, 28px); margin-bottom: 14px; color: #fff; }
+.doc-related-list {
+  list-style: none; padding: 0; margin: 12px 0 0;
+  display: grid; gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.doc-related-list a {
+  display: flex; gap: 10px; align-items: center;
+  padding: 10px 14px; border-radius: 8px;
+  border: 1px solid var(--border); background: rgba(255,255,255,0.02);
+  transition: border-color .15s, background .15s;
+  text-decoration: none;
+  border-bottom: 1px solid var(--border); /* override the prose underline */
+}
+.doc-related-list a:hover {
+  border-color: var(--mint-border); background: rgba(51,226,154,0.04);
+}
+.doc-related-label {
+  color: var(--fg-muted); font-size: 13px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ---- Bloomberg vs. Godel ----------------------------------------- */
+.doc-bbg-compare { margin-top: 48px; }
+.doc-bbg-compare h2 {
+  font-size: clamp(22px, 2.3vw, 28px); margin-bottom: 14px; color: #fff;
+  padding-bottom: 10px; border-bottom: 1px solid var(--border);
+}
+
+/* ---- FAQ --------------------------------------------------------- */
+.doc-faq { margin-top: 80px; }
+.doc-faq h2 {
+  font-family: 'Sofia Sans Semi Condensed', 'Inter', sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  line-height: 1.05;
+  font-size: clamp(36px, 4.2vw, 56px);
+  color: #fff;
+  margin: 0 0 56px;
+  padding: 0;
+  border: none;
+}
+.doc-faq-item {
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: none;
+  padding: 0;
+  margin: 0;
+  transition: none;
+}
+.doc-faq-item[open] { border-color: rgba(255,255,255,0.07); }
+.doc-faq-item summary {
+  padding: 26px 0;
+  cursor: pointer;
+  user-select: none;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  color: #9a9a9a;
+  font-size: 16px;
+  list-style: none;
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+}
+.doc-faq-item summary::-webkit-details-marker { display: none; }
+.doc-faq-item summary::after {
+  content: '+';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #161616;
+  border: 1px solid #232328;
+  color: #b5b5b5;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 300;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+.doc-faq-item[open] summary::after { content: '\2212'; }
+.doc-faq-a {
+  padding: 0 0 26px;
+  color: #8a8a8a;
+  line-height: 1.65;
+  font-size: 16px;
+  max-width: 720px;
+}
+.doc-faq-a a { color: #b5b5b5; }
+
+/* ---- Tables ----------------------------------------------------- */
+.doc-table-wrap {
+  overflow-x: auto; margin: 22px 0;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+}
+.doc-table {
+  width: 100%; border-collapse: collapse; font-size: 14px;
+}
+.doc-table th, .doc-table td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.doc-table thead th {
+  background: rgba(255,255,255,0.03);
+  color: var(--fg-muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.doc-table tbody tr:last-child td { border-bottom: 0; }
+.doc-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+.doc-table td strong { color: #fff; }
+
+/* ---- Next-steps footer ----------------------------------------- */
+.doc-next {
+  margin-top: 64px; padding-top: 28px;
+  border-top: 1px solid var(--border);
+  color: var(--fg-muted);
+}
+.doc-next h3 { color: #fff; font-size: 16px; margin-bottom: 6px; }
+.doc-next a { color: var(--mint); border-bottom: 1px solid rgba(51,226,154,0.25); transition: border-color .15s; }
+.doc-next a:hover { border-color: var(--mint); }
+
+/* ---- Responsive ------------------------------------------------- */
+@media (max-width: 640px) {
+  .doc-wrap { padding: 32px 18px 80px; }
+  .doc-h1 { gap: 10px; }
+  .gt-cmd.gt-cmd-lg { font-size: 15px; padding: 3px 10px; }
+}
+
+/* ---- Sidebar (injected by /assets/js/docs-sidebar.js) ----------- */
+.doc-shell { display: block; }
+
+@media (min-width: 1080px) {
+  .doc-shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 56px 32px 120px;
+  }
+  .doc-shell > .doc-wrap {
+    max-width: 860px;
+    margin: 0;
+    padding: 0;
+  }
+
+  .docs-toc {
+    position: sticky; top: 86px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto; overscroll-behavior: contain;
+    padding: 4px 4px 24px 0;
+    font-size: 13.5px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.12) transparent;
+  }
+  .docs-toc::-webkit-scrollbar { width: 6px; }
+  .docs-toc::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 100px; }
+  .docs-toc::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+
+  .docs-toc .toc-search {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; padding: 9px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    border-radius: 10px;
+    color: var(--fg-dim, #888);
+    text-decoration: none;
+    font: inherit; font-size: 13px;
+    margin-bottom: 18px;
+    transition: border-color .15s, background .15s;
+  }
+  .docs-toc .toc-search:hover { border-color: rgba(255,255,255,0.16); background: rgba(255,255,255,0.05); color: var(--fg-dim, #888); }
+  .docs-toc .toc-search svg { color: var(--fg-dim, #888); flex-shrink: 0; }
+  .docs-toc .toc-search .toc-search-text { flex: 1; text-align: left; }
+  .docs-toc .toc-search .kbd {
+    font-size: 11px; padding: 2px 6px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 5px; color: var(--fg-dim, #888);
+    font-family: 'Oxygen Mono', monospace;
+  }
+  /* Functional inline command search (rendered by docs-sidebar.js). */
+  .docs-toc .toc-search-wrap { position: relative; margin-bottom: 18px; }
+  .docs-toc .toc-search-wrap .toc-search { margin-bottom: 0; cursor: text; }
+  .docs-toc .toc-search-input {
+    flex: 1; min-width: 0;
+    background: transparent; border: none; outline: none;
+    color: var(--fg, #eaeaea); font: inherit; font-size: 13px; padding: 0;
+  }
+  .docs-toc .toc-search-input::placeholder { color: var(--fg-dim, #888); }
+  .docs-toc .toc-search-results {
+    position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 40;
+    background: #0c0c0c; border: 1px solid var(--border-strong, rgba(255,255,255,0.14));
+    border-radius: 10px; max-height: 320px; overflow-y: auto;
+    box-shadow: 0 18px 44px rgba(0,0,0,0.6);
+  }
+  .docs-toc .toc-search-results[hidden] { display: none; }
+  .docs-toc .toc-sr {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 12px; text-decoration: none; color: var(--fg, #eaeaea);
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+  }
+  .docs-toc .toc-sr:last-child { border-bottom: none; }
+  .docs-toc .toc-sr:hover, .docs-toc .toc-sr.is-active { background: rgba(51,226,154,0.07); }
+  .docs-toc .toc-sr .gt-cmd { flex-shrink: 0; }
+  .docs-toc .toc-sr .sr-label { font-size: 13px; color: var(--fg-muted, #B6B6B6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .docs-toc .toc-sr-empty { padding: 10px 12px; color: var(--fg-dim, #888); font-size: 13px; }
+
+  /* Collapsible sections — custom (button + panel) so we can animate the
+     open/close. Native <details> can't transition height portably; this
+     uses the grid-template-rows 0fr→1fr trick. */
+  .docs-toc .toc-section { margin: 10px 0 0; }
+  .docs-toc .toc-section:first-of-type { margin-top: 0; }
+  .docs-toc .toc-subsection { margin: 6px 0 0; }
+
+  .docs-toc .toc-summary {
+    width: 100%;
+    background: none; border: none;
+    text-align: left;
+    cursor: pointer; user-select: none;
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 7px;
+    font: inherit; color: inherit;
+    transition: background .12s, color .12s, opacity .12s;
+  }
+  .docs-toc .toc-summary::after {
+    content: '';
+    flex-shrink: 0;
+    width: 6px; height: 6px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform .22s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.55;
+    margin-right: 4px;
+  }
+  .docs-toc .is-open > .toc-summary::after { transform: rotate(45deg); }
+
+  .docs-toc .toc-section > .toc-summary {
+    font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase;
+    color: var(--fg-dim, #888); font-weight: 600;
+    padding: 10px 10px 8px;
+  }
+  .docs-toc .toc-section > .toc-summary:hover {
+    color: var(--fg, #eaeaea); background: rgba(255,255,255,0.03);
+  }
+  .docs-toc .toc-subsection > .toc-summary {
+    font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--fg-dim, #888); font-weight: 500;
+    padding: 8px 10px 4px;
+    opacity: 0.78;
+  }
+  .docs-toc .toc-subsection > .toc-summary:hover {
+    color: var(--fg, #eaeaea); opacity: 1;
+  }
+
+  .docs-toc .toc-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .25s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity .22s ease;
+    opacity: 0;
+  }
+  .docs-toc .is-open > .toc-panel { grid-template-rows: 1fr; opacity: 1; }
+  .docs-toc .toc-panel-inner { overflow: hidden; min-height: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .docs-toc .toc-panel { transition: none; }
+    .docs-toc .toc-summary::after { transition: none; }
+  }
+
+  .docs-toc ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+  .docs-toc a {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 6px 10px; border-radius: 7px;
+    color: var(--fg-muted, #b8b8b8);
+    text-decoration: none;
+    line-height: 1.4;
+    transition: background .12s, color .12s;
+  }
+  .docs-toc a:hover { color: var(--fg, #eaeaea); background: rgba(255,255,255,0.04); }
+  .docs-toc a.is-active { color: var(--mint, #33E29A); background: rgba(51,226,154,0.06); }
+
+  .docs-toc a.toc-cmd .toc-cmd-code {
+    display: inline-block;
+    font-family: 'Oxygen Mono', 'SFMono-Regular', Menlo, monospace;
+    font-size: 11px;
+    color: #e89a3c;
+    background: #2b1d11;
+    border: 1px solid #593815;
+    border-radius: 6px;
+    padding: 1px 6px;
+    flex-shrink: 0;
+    line-height: 1.4;
+  }
+  .docs-toc a.toc-cmd.is-stub { opacity: 0.45; cursor: default; pointer-events: none; }
+  .docs-toc a.toc-cmd .toc-cmd-label {
+    color: inherit; font-size: 13px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .docs-toc a.toc-cmd:hover .toc-cmd-label { color: var(--fg, #eaeaea); }
+}
+
+@media (max-width: 1079px) {
+  .docs-toc { display: none; }
+}
+
+/* Prev / next command navigation (top of every command page) */
+.doc-prevnext {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 14px;
+  margin: 0 0 26px;
+}
+.doc-pn {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  max-width: calc(50% - 7px);
+  padding: 11px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card-g1);
+  text-decoration: none;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+.doc-pn:hover {
+  border-color: var(--mint-border);
+  background: #181818;
+  text-decoration: none;
+}
+.doc-pn-prev:hover { transform: translateX(-2px); }
+.doc-pn-next { margin-left: auto; }
+.doc-pn-next:hover { transform: translateX(2px); }
+.doc-pn-empty { border: none; background: none; pointer-events: none; }
+.doc-pn-arrow { font-size: 17px; line-height: 1; color: var(--fg-dim); flex-shrink: 0; }
+.doc-pn:hover .doc-pn-arrow { color: var(--mint); }
+.doc-pn-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.doc-pn-next .doc-pn-text { align-items: flex-end; }
+.doc-pn-dir {
+  font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--fg-dim); font-weight: 500;
+}
+.doc-pn-name { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.doc-pn-label {
+  font-size: 14px; color: var(--fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+@media (max-width: 560px) {
+  .doc-pn-label { display: none; }
+  .doc-pn { gap: 10px; padding: 10px 13px; }
+}

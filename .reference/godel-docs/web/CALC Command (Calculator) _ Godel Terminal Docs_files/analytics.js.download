@@ -1,0 +1,296 @@
+/* Shared analytics + ad-tracking loader with EU consent gating.
+
+   - Google Consent Mode v2: consent defaults to DENIED for EU/EEA regions only.
+     Google tags (Ads + GTM) load immediately everywhere and self-gate by region,
+     so US / rest-of-world behavior is unchanged.
+   - Non-Google tags (Meta Pixel, Twitter, Adroll, Fingerprint) do not understand
+     Consent Mode, so they are DEFERRED for EU visitors until they Accept, and
+     fire immediately everywhere else.
+   - EU detection uses Cloudflare's /cdn-cgi/trace (cached in a cookie).
+   - The consent banner (assets/js/cookie-consent.js) is shown ONLY to EU
+     visitors who have not chosen yet; it fails open (treated as non-EU) if the
+     geo check errors, so tracking never breaks on a Cloudflare hiccup.
+
+   Include as <script src="assets/js/analytics.js"></script> (root pages) or
+   ../assets/js/analytics.js from nested pages.
+   Tag IDs: Meta 661495503062289, Google Ads AW-17965785940, GTM-PC3QGKQH,
+   Twitter prxg7, Adroll VL5DCUV3CVEAPKTPJROSP4 / WMYXOYN65JCLTBGHKJG235,
+   Fingerprint v4/zoUrDML0pHuyretpgfiL. */
+(function () {
+  'use strict';
+
+  // EU/EEA + UK + Switzerland. Adjust here if scope changes.
+  var EU = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE',
+            'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT',
+            'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'CH'];
+  var CONSENT_COOKIE = 'godel_cookie_consent';
+
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { window.dataLayer.push(arguments); };
+
+  /* ── Google Consent Mode v2: deny by default in EU regions only ─ */
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'denied',
+    region: EU
+  });
+
+  /* ── Google tags (respect Consent Mode by region automatically) ─ */
+  var gtagScript = document.createElement('script');
+  gtagScript.async = true;
+  gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17965785940';
+  document.head.appendChild(gtagScript);
+  gtag('js', new Date());
+  gtag('config', 'AW-17965785940');
+
+  (function (w, d, s, l, i) {
+    w[l] = w[l] || [];
+    w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+    var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s),
+        dl = l != 'dataLayer' ? '&l=' + l : '';
+    j.async = true;
+    j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+    f.parentNode.insertBefore(j, f);
+  })(window, document, 'script', 'dataLayer', 'GTM-PC3QGKQH');
+
+  /* ── Non-Google tags: fired now (non-EU) or after consent (EU) ── */
+  function fireNonGoogleTags() {
+    if (window.__godelTagsFired) return;
+    window.__godelTagsFired = true;
+
+    /* Meta Pixel */
+    !function (f, b, e, v, n, t, s) {
+      if (f.fbq) return;
+      n = f.fbq = function () {
+        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+      };
+      if (!f._fbq) f._fbq = n;
+      n.push = n; n.loaded = !0; n.version = '2.0';
+      n.queue = []; t = b.createElement(e); t.async = !0;
+      t.src = v; s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s);
+    }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '661495503062289');
+    fbq('track', 'PageView');
+
+    /* Twitter conversion tracking */
+    !function (e, t, n, s, u, a) {
+      e.twq || (s = e.twq = function () {
+        s.exe ? s.exe.apply(s, arguments) : s.queue.push(arguments);
+      },
+      s.version = '1.1', s.queue = [],
+      u = t.createElement(n), u.async = !0,
+      u.src = 'https://static.ads-twitter.com/uwt.js',
+      a = t.getElementsByTagName(n)[0],
+      a.parentNode.insertBefore(u, a));
+    }(window, document, 'script');
+    twq('config', 'prxg7');
+
+    /* Adroll */
+    window.adroll_adv_id = 'VL5DCUV3CVEAPKTPJROSP4';
+    window.adroll_pix_id = 'WMYXOYN65JCLTBGHKJG235';
+    window.adroll_version = '2.0';
+    (function (w, d, e, o, a) {
+      w.__adroll_loaded = true;
+      w.adroll = w.adroll || [];
+      w.adroll.f = ['setProperties', 'identify', 'track', 'identify_email', 'get_cookie'];
+      var roundtripUrl = 'https://s.adroll.com/j/' + w.adroll_adv_id + '/roundtrip.js';
+      for (a = 0; a < w.adroll.f.length; a++) {
+        w.adroll[w.adroll.f[a]] = w.adroll[w.adroll.f[a]] || (function (n) {
+          return function () { w.adroll.push([n, arguments]); };
+        })(w.adroll.f[a]);
+      }
+      e = d.createElement('script');
+      o = d.getElementsByTagName('script')[0];
+      e.async = 1; e.src = roundtripUrl;
+      o.parentNode.insertBefore(e, o);
+    })(window, document);
+    adroll.track('pageView');
+
+    startFingerprint();
+
+    // First-party pageview. Prefer the durable fp_visitor_id cookie (stable
+    // across loads/sessions and immune to a per-load identify failure); only
+    // wait on the live identify when no cookie exists yet (first visit).
+    var fpCookie = readFpCookie();
+    if (fpCookie) {
+      sendGodelPageview(fpCookie);
+    } else {
+      window.fpPromise
+        .then(function (fp) { sendGodelPageview(fp && fp.visitor_id); })
+        .catch(function () { sendGodelPageview(null); });
+    }
+  }
+
+  /* ── Fingerprint (device intelligence / visitor ID) ───────────── */
+  // Exposes window.godelVisitorId + window.fpPromise ({ visitor_id, event_id }),
+  // pushes a fingerprint_loaded dataLayer event, and hands the ID to
+  // app.godelterminal.com via a first-party parent-domain cookie. Result is
+  // cached per session so identify() (the billed call) runs once per session.
+  function startFingerprint() {
+    var CACHE_KEY = 'godel_fp_v1';
+
+    function publish(visitorId, eventId) {
+      window.godelVisitorId = visitorId;
+      try {
+        var host = location.hostname;
+        if (host === 'godelterminal.com' || host.endsWith('.godelterminal.com')) {
+          document.cookie = 'fp_visitor_id=' + encodeURIComponent(visitorId) +
+            '; Domain=.godelterminal.com; Path=/; Max-Age=15552000; SameSite=Lax; Secure';
+        }
+      } catch (e) {}
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: 'fingerprint_loaded',
+        visitor_id: visitorId,
+        event_id: eventId
+      });
+      return { visitor_id: visitorId, event_id: eventId };
+    }
+
+    var cached = null;
+    try { cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null'); } catch (e) {}
+    if (cached && cached.visitor_id) {
+      window.fpPromise = Promise.resolve(publish(cached.visitor_id, cached.event_id));
+      return;
+    }
+
+    window.fpPromise = import('https://fpjscdn.net/v4/zoUrDML0pHuyretpgfiL')
+      .then(function (Fingerprint) { return Fingerprint.start(); })
+      .then(function (fp) { return fp.get(); })
+      .then(function (result) {
+        var visitorId = result.visitor_id || result.visitorId;
+        var eventId   = result.event_id  || result.requestId;
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ visitor_id: visitorId, event_id: eventId })); } catch (e) {}
+        return publish(visitorId, eventId);
+      })
+      .catch(function () { /* Fingerprint unavailable; fail silently. */ });
+  }
+
+  /* ── First-party pageview beacon to Godel's activity API ───────── */
+  // Anonymous (no JWT): the endpoint records it as ANON with a null user_id.
+  // The fp_visitor_id lets a pre-signup visit be joined to the eventual account.
+  var GODEL_ACTIVITY_URL = 'https://api.godelterminal.com/api/v1/activity';
+
+  function sendGodelPageview(visitorId) {
+    try {
+      var params = new URLSearchParams(location.search);
+      var payload = {
+        fp_visitor_id: visitorId || null,
+        path: location.pathname,
+        referrer: document.referrer || null
+      };
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']
+        .forEach(function (k) { var v = params.get(k); if (v) payload[k] = v; });
+
+      fetch(GODEL_ACTIVITY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uuid: godelUuidV4(),
+          timestamp: new Date().toISOString(), // ISO-8601 + Z parses as OffsetDateTime
+          action: 'url:' + location.pathname.slice(1), // path only, no leading slash, no query
+          command: 'meta:pageload',
+          ticker: null,
+          sourceId: null,
+          seriesId: null,
+          payload: payload
+        }),
+        keepalive: true,
+        credentials: 'omit',
+        mode: 'cors'
+      }).catch(function () { /* fire-and-forget */ });
+    } catch (e) { /* never break the page */ }
+  }
+
+  // RFC-4122 v4 via crypto.getRandomValues (avoids crypto.randomUUID, which is
+  // <5y old); getRandomValues is universally supported.
+  function godelUuidV4() {
+    var b = new Uint8Array(16);
+    (window.crypto || window.msCrypto).getRandomValues(b);
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    var h = [];
+    for (var i = 0; i < 256; i++) h.push((i + 0x100).toString(16).slice(1));
+    return h[b[0]] + h[b[1]] + h[b[2]] + h[b[3]] + '-' + h[b[4]] + h[b[5]] +
+      '-' + h[b[6]] + h[b[7]] + '-' + h[b[8]] + h[b[9]] + '-' +
+      h[b[10]] + h[b[11]] + h[b[12]] + h[b[13]] + h[b[14]] + h[b[15]];
+  }
+
+  /* ── Consent helpers ──────────────────────────────────────────── */
+  function grantGoogleConsent() {
+    gtag('consent', 'update', {
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      analytics_storage: 'granted'
+    });
+  }
+
+  function readFpCookie() {
+    try {
+      var m = document.cookie.match(/(?:^|;\s*)fp_visitor_id=([^;]+)/);
+      return m ? decodeURIComponent(m[1]) : null;
+    } catch (e) { return null; } // malformed cookie value → treat as absent
+  }
+
+  function readConsent() {
+    var m = document.cookie.match(/(?:^|;\s*)godel_cookie_consent=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  function writeConsent(value) {
+    var base = CONSENT_COOKIE + '=' + encodeURIComponent(value) +
+               '; Path=/; Max-Age=31536000; SameSite=Lax';
+    try {
+      var host = location.hostname;
+      if (host === 'godelterminal.com' || host.endsWith('.godelterminal.com')) {
+        document.cookie = base + '; Domain=.godelterminal.com; Secure';
+      } else {
+        document.cookie = base;
+      }
+    } catch (e) {}
+    window.dataLayer.push({ event: value === 'accepted' ? 'cookie_consent_granted' : 'cookie_consent_denied' });
+    window.godelCookieConsent = value;
+  }
+
+  /* ── EU detection via Cloudflare trace (cached one day) ───────── */
+  function detectEU(cb) {
+    var m = document.cookie.match(/(?:^|;\s*)godel_geo_cc=([A-Z]{2})/);
+    if (m) { cb(EU.indexOf(m[1]) !== -1); return; }
+    fetch('/cdn-cgi/trace')
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        var mm = t.match(/loc=([A-Z]{2})/);
+        var cc = mm ? mm[1] : '';
+        try { if (cc) document.cookie = 'godel_geo_cc=' + cc + '; Path=/; Max-Age=86400; SameSite=Lax'; } catch (e) {}
+        cb(cc ? EU.indexOf(cc) !== -1 : false);
+      })
+      .catch(function () { cb(false); }); // fail open: treat as non-EU
+  }
+
+  /* ── Orchestrate ──────────────────────────────────────────────── */
+  detectEU(function (isEU) {
+    if (!isEU) { fireNonGoogleTags(); return; }        // rest of world: fire all, no banner
+
+    var choice = readConsent();
+    if (choice === 'accepted') { grantGoogleConsent(); fireNonGoogleTags(); return; }
+    if (choice === 'declined') { return; }              // stay denied, nothing extra fires
+
+    // EU + undecided: lazy-load the banner UI and let the visitor choose.
+    var s = document.createElement('script');
+    s.src = '/assets/js/cookie-consent.js';
+    s.defer = true;
+    s.onload = function () {
+      if (!window.GodelConsentBanner) return;
+      window.GodelConsentBanner.show(
+        function onAccept() { writeConsent('accepted'); grantGoogleConsent(); fireNonGoogleTags(); },
+        function onDecline() { writeConsent('declined'); }
+      );
+    };
+    document.head.appendChild(s);
+  });
+})();
