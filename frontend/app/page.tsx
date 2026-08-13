@@ -3,11 +3,17 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bot, MessageSquare, Sparkles, Code, Brain, Globe } from "lucide-react";
+import { Bot, MessageSquare, Sparkles, Code, Brain, Globe, BarChart3, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Page() {
   const features = [
+    {
+      icon: LayoutDashboard,
+      title: "Financial Dashboard",
+      description: "OpenBB Workspace compatible dashboard with equity, macro, options, portfolio, and news widgets",
+      href: "/dashboard",
+    },
     {
       icon: Bot,
       title: "AI Chat Interface",
@@ -51,21 +57,29 @@ export default function Page() {
       <div className="flex w-full max-w-4xl flex-col items-center gap-8">
         <div className="text-center">
           <h1 className="mb-4 text-4xl font-bold tracking-tight">
-            OpenGodel <span className="text-primary">AI</span>
+            OpenGodel <span className="text-primary">Terminal</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            A modern AI chat interface built with Next.js 16, shadcn/ui (Base UI),
-            and Vercel's ai-elements components. Features streaming responses,
-            reasoning display, code blocks, and multi-model support.
+            A comprehensive financial terminal built with Next.js 16, shadcn/ui (Base UI),
+            OpenBB Platform, and ai-elements. Features real-time market data, macro analytics,
+            options analysis, portfolio management, and AI-powered insights.
           </p>
         </div>
 
-        <Link href="/chat" className="w-full">
-          <Button size="lg" className="w-full gap-2">
-            <Sparkles className="size-5" />
-            Start Chatting
-          </Button>
-        </Link>
+        <div className="flex w-full gap-4">
+          <Link href="/dashboard" className="flex-1">
+            <Button size="lg" className="w-full gap-2">
+              <BarChart3 className="size-5" />
+              Open Dashboard
+            </Button>
+          </Link>
+          <Link href="/chat" className="flex-1">
+            <Button size="lg" variant="outline" className="w-full gap-2">
+              <Sparkles className="size-5" />
+              AI Chat
+            </Button>
+          </Link>
+        </div>
 
         <div className="grid w-full gap-4 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
@@ -91,7 +105,7 @@ export default function Page() {
         </div>
 
         <div className="flex w-full items-center justify-between border-t pt-6 text-sm text-muted-foreground">
-          <span>Built with Next.js 16 • shadcn/ui (Base) • ai-elements • Tailwind v4</span>
+          <span>Built with Next.js 16 • shadcn/ui (Base) • ai-elements • OpenBB Platform • Tailwind v4</span>
           <span className="font-mono">(Press <kbd className="px-1.5 py-0.5 rounded bg-muted">d</kbd> to toggle dark mode)</span>
         </div>
       </div>

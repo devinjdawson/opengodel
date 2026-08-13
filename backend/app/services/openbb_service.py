@@ -39,7 +39,7 @@ class OpenBBService:
 
         self._initialized = True
 
-    async def get_historical_prices(
+    def get_historical_prices(
         self,
         symbol: str,
         start_date: str | None = None,
@@ -57,14 +57,20 @@ class OpenBBService:
         if end_date:
             params["end_date"] = end_date
 
-        result = await obb.equity.price.historical(**params)
+        result = obb.equity.price.historical(**params)
         data = result.to_df()
+
+        # Reset index to get date as a column
+        if data.index.name == 'date' or 'date' not in data.columns:
+            data = data.reset_index()
 
         candles = []
         for _, row in data.iterrows():
+            # Handle both 'date' and 'timestamp' column names
+            timestamp = row.get("date", row.get("timestamp"))
             candles.append(
                 CandleData(
-                    timestamp=row["date"],
+                    timestamp=timestamp,
                     open=row["open"],
                     high=row["high"],
                     low=row["low"],
@@ -74,7 +80,7 @@ class OpenBBService:
             )
         return candles
 
-    async def get_news(
+    def get_news(
         self,
         symbols: str | None = None,
         limit: int = 50,
@@ -87,7 +93,7 @@ class OpenBBService:
         if symbols:
             params["symbols"] = symbols
 
-        result = await obb.news.world(**params)
+        result = obb.news.world(**params)
         data = result.to_df()
 
         articles = []
@@ -105,31 +111,31 @@ class OpenBBService:
             )
         return articles
 
-    async def search_equity(
+    def search_equity(
         self,
         query: str,
         provider: str = "yfinance",
     ) -> list[dict[str, Any]]:
-        result = await obb.equity.search(query=query, provider=provider)
+        result = obb.equity.search(query=query, provider=provider)
         return result.to_df().to_dict("records")
 
-    async def get_equity_quote(
+    def get_equity_quote(
         self,
         symbol: str,
         provider: str = "yfinance",
     ) -> dict[str, Any] | None:
-        result = await obb.equity.price.quote(symbol=symbol, provider=provider)
+        result = obb.equity.price.quote(symbol=symbol, provider=provider)
         data = result.to_df()
         if data.empty:
             return None
         return data.iloc[0].to_dict()
 
-    async def get_company_profile(
+    def get_company_profile(
         self,
         symbol: str,
         provider: str = "yfinance",
     ) -> dict[str, Any] | None:
-        result = await obb.equity.profile(symbol=symbol, provider=provider)
+        result = obb.equity.profile(symbol=symbol, provider=provider)
         data = result.to_df()
         if data.empty:
             return None

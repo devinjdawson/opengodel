@@ -5,9 +5,10 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 
-from app.api.v1 import equity, news, ai
+from app.api.v1 import equity, news, ai, widgets_equity, widgets_macro, widgets_news, widgets_options, widgets_portfolio, widgets_godel
 from app.core.config import settings
 from app.core.database import close_db, init_db
+from app.core.widget_registry import get_widgets, get_templates, set_templates, load_templates_from_file
 from app.services.scheduler import shutdown_scheduler, start_scheduler
 
 
@@ -17,6 +18,10 @@ async def lifespan(app: FastAPI):
 
     redis = aioredis.from_url(settings.redis_url, encoding="utf-8", decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+
+    # Load templates
+    templates = load_templates_from_file()
+    set_templates(templates)
 
     await start_scheduler()
 
@@ -29,7 +34,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="OpenBB Custom API",
-    description="Financial data API with OpenBB, PostgreSQL + pgvector, and semantic search",
+    description="Financial data API with OpenBB, PostgreSQL + pgvector, semantic search, and OpenBB Workspace compatible widgets",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -42,9 +47,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Core API routers
 app.include_router(equity.router)
 app.include_router(news.router)
 app.include_router(ai.router)
+
+# OpenBB Workspace compatible widget routers
+app.include_router(widgets_equity.router)
+app.include_router(widgets_macro.router)
+app.include_router(widgets_news.router)
+app.include_router(widgets_options.router)
+app.include_router(widgets_portfolio.router)
+app.include_router(widgets_godel.router)
 
 
 @app.get("/health")
@@ -55,3 +69,16 @@ async def health_check() -> dict:
 @app.get("/openapi.json")
 async def get_openapi_spec() -> dict:
     return app.openapi()
+
+
+# OpenBB Workspace compatibility endpoints
+@app.get("/widgets.json")
+async def get_widgets_json():
+    """OpenBB Workspace widget registry endpoint."""
+    return get_widgets()
+
+
+@app.get("/templates.json")
+async def get_templates_json():
+    """OpenBB Workspace templates endpoint."""
+    return get_templates()

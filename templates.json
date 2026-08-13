@@ -1,0 +1,354 @@
+[
+  {
+    "name": "Equity Analysis",
+    "img": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop",
+    "img_dark": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop",
+    "img_light": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop",
+    "description": "Comprehensive equity analysis with charts, technicals, and fundamentals",
+    "allowCustomization": true,
+    "tabs": {
+      "overview": {
+        "id": "overview",
+        "name": "Overview",
+        "layout": [
+          {
+            "i": "candlestick",
+            "x": 0,
+            "y": 0,
+            "w": 50,
+            "h": 25
+          },
+          {
+            "i": "quote-summary",
+            "x": 50,
+            "y": 0,
+            "w": 25,
+            "h": 20
+          },
+          {
+            "i": "technical-indicators",
+            "x": 0,
+            "y": 25,
+            "w": 50,
+            "h": 30
+          },
+          {
+            "i": "key-stats",
+            "x": 50,
+            "y": 20,
+            "w": 40,
+            "h": 25
+          },
+          {
+            "i": "financial-statements",
+            "x": 0,
+            "y": 55,
+            "w": 50,
+            "h": 30
+          },
+          {
+            "i": "analyst-estimates",
+            "x": 50,
+            "y": 45,
+            "w": 45,
+            "h": 25
+          }
+        ]
+      },
+      "ownership": {
+        "id": "ownership",
+        "name": "Ownership",
+        "layout": [
+          {
+            "i": "institutional-ownership",
+            "x": 0,
+            "y": 0,
+            "w": 50,
+            "h": 25
+          },
+          {
+            "i": "insider-trading",
+            "x": 0,
+            "y": 25,
+            "w": 50,
+            "h": 25
+          },
+          {
+            "i": "dividend-history",
+            "x": 0,
+            "y": 50,
+            "w": 40,
+            "h": 25
+          }
+        ]
+      }
+    },
+    "groups": []
+  },
+  {
+    "name": "Macro Dashboard",
+    "img": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop",
+    "img_dark": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop",
+    "img_light": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop",
+    "description": "Macroeconomic indicators: inflation, employment, Fed policy, yield curve",
+    "allowCustomization": true,
+    "tabs": {
+      "overview": {
+        "id": "overview",
+        "name": "Overview",
+        "layout": [
+          {
+            "i": "macro-table",
+            "x": 0,
+            "y": 0,
+            "w": 30,
+            "h": 25
+          },
+          {
+            "i": "yield-curve",
+            "x": 30,
+            "y": 0,
+            "w": 40,
+            "h": 20
+          },
+          {
+            "i": "inflation-dashboard",
+            "x": 0,
+            "y": 25,
+            "w": 50,
+            "h": 30
+          },
+          {
+            "i": "employment-dashboard",
+            "x": 50,
+            "y": 0,
+            "w": 50,
+            "h": 30
+          },
+          {
+            "i": "fed-balance-sheet",
+            "x": 0,
+            "y": 55,
+            "w": 50,
+            "h": 25
+          }
+        ]
+      }
+    },
+    "groups": []
+  },
+  {
+    "name": "News & Sentiment",
+    "img": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=300&fit=crop",
+    "img_dark": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=300&fit=crop",
+    "img_light": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=300&fit=crop",
+    "description": "Financial news with AI-powered semantic search and sentiment analysis",
+    "allowCustomization": true,
+    "tabs": {
+      "overview": {
+        "id": "overview",
+        "name": "Overview",
+        "layout": [
+          {
+            "i": "latest-articles",
+            "x": 0,
+            "y": 0,
+            "w": 60,
+            "h": 25
+          },
+          {
+            "i": "sentiment-analysis",
+            "x": 60,
+            "y": 0,
+            "w": 30,
+            "h": 20
+          },
+          {
+            "i": "semantic-search",
+            "x": 0,
+            "y": 25,
+            "w": 50,
+            "h": 25
+          },
+          {
+            "i": "news-symbols",
+            "x": 50,
+            "y": 25,
+            "w": 20,
+            "h": 30
+          }
+        ]
+      }
+    },
+    "groups": []
+  },
+  {
+    "name": "Options Analytics",
+    "img": "https://images.unsplash.com/photo-1559526324-593bc073d938?w=400&h=300&fit=crop",
+    "img_dark": "https://images.unsplash.com/photo-1559526324-593bc073d938?w=400&h=300&fit=crop",
+    "img_light": "https://images.unsplash.com/photo-1559526324-593bc073d938?w=400&h=300&fit=crop",
+    "description": "Options chains, volatility surface, IV term structure, and Greeks",
+    "allowCustomization": true,
+    "tabs": {
+      "overview": {
+        "id": "overview",
+        "name": "Overview",
+        "layout": [
+          {
+            "i": "option-chain",
+            "x": 0,
+            "y": 0,
+            "w": 60,
+            "h": 25
+          },
+          {
+            "i": "iv-term-structure",
+            "x": 0,
+            "y": 25,
+            "w": 40,
+            "h": 20
+          },
+          {
+            "i": "greeks-dashboard",
+            "x": 40,
+            "y": 25,
+            "w": 40,
+            "h": 25
+          },
+          {
+            "i": "volatility-surface",
+            "x": 0,
+            "y": 45,
+            "w": 50,
+            "h": 30
+          }
+        ]
+      }
+    },
+    "groups": []
+  },
+  {
+    "name": "Portfolio Analytics",
+    "img": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop",
+    "img_dark": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop",
+    "img_light": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop",
+    "description": "Portfolio performance, allocation, risk metrics, and correlations",
+    "allowCustomization": true,
+    "tabs": {
+      "overview": {
+        "id": "overview",
+        "name": "Overview",
+        "layout": [
+          {
+            "i": "performance",
+            "x": 0,
+            "y": 0,
+            "w": 50,
+            "h": 25
+          },
+          {
+            "i": "allocation",
+            "x": 50,
+            "y": 0,
+            "w": 30,
+            "h": 20
+          },
+          {
+            "i": "correlation-matrix",
+            "x": 0,
+            "y": 25,
+            "w": 35,
+            "h": 25
+          },
+          {
+            "i": "risk-metrics",
+            "x": 35,
+            "y": 25,
+            "w": 35,
+            "h": 20
+          }
+        ]
+      }
+    },
+    "groups": []
+  },
+  {
+    "name": "Godel Terminal",
+    "img": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=300&fit=crop",
+    "img_dark": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=300&fit=crop",
+    "img_light": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=300&fit=crop",
+    "description": "Godel Terminal command implementations: AL, DES, FA, GR, ERN, INS, IMAPI, DVD",
+    "allowCustomization": true,
+    "tabs": {
+      "equity": {
+        "id": "equity",
+        "name": "Equity Research",
+        "layout": [
+          {
+            "i": "equity-search",
+            "x": 0,
+            "y": 0,
+            "w": 40,
+            "h": 20
+          },
+          {
+            "i": "company-profile",
+            "x": 40,
+            "y": 0,
+            "w": 40,
+            "h": 25
+          },
+          {
+            "i": "financial-statements",
+            "x": 0,
+            "y": 20,
+            "w": 50,
+            "h": 30
+          },
+          {
+            "i": "key-stats",
+            "x": 50,
+            "y": 20,
+            "w": 40,
+            "h": 25
+          },
+          {
+            "i": "analyst-estimates",
+            "x": 0,
+            "y": 50,
+            "w": 45,
+            "h": 25
+          },
+          {
+            "i": "dividend-history",
+            "x": 45,
+            "y": 45,
+            "w": 40,
+            "h": 25
+          }
+        ]
+      },
+      "ownership": {
+        "id": "ownership",
+        "name": "Ownership & Insiders",
+        "layout": [
+          {
+            "i": "insider-trading",
+            "x": 0,
+            "y": 0,
+            "w": 50,
+            "h": 25
+          },
+          {
+            "i": "institutional-ownership",
+            "x": 0,
+            "y": 25,
+            "w": 50,
+            "h": 25
+          }
+        ]
+      }
+    },
+    "groups": []
+  }
+]
