@@ -1,0 +1,28 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "mcp":{
+    "openbb": {
+      "enabled": true
+    },
+  },
+  "agent": {
+    "plan": {
+      "model": "kilo/kilo-auto/free"
+    },
+    "debug": {
+      "model": "kilo/openrouter/free"
+    },
+    "orchestrator": {
+      "model": "kilo/kilo-auto/free"
+    },
+    "ask": {
+      "model": "kilo/kilo-auto/free"
+    },
+    "code": {
+      "model": "kilo/openrouter/free"
+    },
+    "compaction": {
+      "model": "kilo/nvidia/nemotron-3-ultra-550b-a55b:free"
+    },
+  },
+}
