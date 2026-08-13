@@ -1,0 +1,42 @@
+[submodule ".reference/AssetManager"]
+	path = .reference/AssetManager
+	url = https://github.com/gamurigm/AssetManager
+[submodule ".reference/crypto-dashboard-app"]
+	path = .reference/crypto-dashboard-app
+	url = https://github.com/Muh-BenitoDwiki27/crypto-dashboard-app
+[submodule ".reference/trading-bb"]
+	path = .reference/trading-bb
+	url = https://github.com/eatusc-personal/trading-bb
+[submodule ".reference/RRG-Dashboard"]
+	path = .reference/RRG-Dashboard
+	url = https://github.com/deeleeramone/RRG-Dashboard
+[submodule ".reference/OpenBBxStreamlit"]
+	path = .reference/OpenBBxStreamlit
+	url = https://github.com/webn3ewbie/OpenBBxStreamlit
+[submodule ".reference/dharmatech-openbb"]
+	path = .reference/dharmatech-openbb
+	url = https://github.com/DidierRLopes/dharmatech-openbb
+[submodule ".reference/openbb_formd_filings"]
+	path = .reference/openbb_formd_filings
+	url = https://github.com/kamathhrishi/openbb_formd_filings
+[submodule ".reference/FinReports"]
+	path = .reference/FinReports
+	url = https://github.com/SimarMann/FinReports
+[submodule ".reference/openbb-dashboard"]
+	path = .reference/openbb-dashboard
+	url = https://github.com/Yash-1511/openbb-dashboard
+[submodule ".reference/OpenBB"]
+	path = .reference/OpenBB
+	url = https://github.com/hansJeong/OpenBB
+[submodule ".reference/stocks"]
+	path = .reference/stocks
+	url = https://github.com/DariusLukasukas/stocks.git
+[submodule ".reference/signalist_stock-tracker-app"]
+	path = .reference/signalist_stock-tracker-app
+	url = https://github.com/adrianhajdin/signalist_stock-tracker-app.git
+[submodule ".reference/stock-picker"]
+	path = .reference/stock-picker
+	url = https://github.com/aryanvichare/stocks.git
+[submodule ".reference/stock_market"]
+	path = .reference/stock_market
+	url = https://github.com/undefinedSahed/stock_market
