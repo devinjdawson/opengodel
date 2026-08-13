@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Any, Optional
+import json
 from fastapi import APIRouter, Query, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -253,7 +254,7 @@ async def get_sentiment_analysis(
         height=400,
     )
     
-    return fig.to_dict()
+    return json.loads(fig.to_json())
 
 
 @router.get("/news-symbols")

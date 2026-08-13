@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Any, Optional, List
 import pandas as pd
+import asyncio
+import json
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 import plotly.graph_objects as go
@@ -11,41 +13,25 @@ from app.core.widget_registry import register_widget, create_base_widget_config,
 
 router = APIRouter(prefix="/widgets/macro", tags=["macro widgets"])
 
-# Initialize OpenBB
-from openbb import obb
+
+async def _run_obb_sync(func, *args, **kwargs):
+    """Run synchronous OpenBB call in thread pool."""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, func, *args, **kwargs)
 
 
 async def _get_fred_series(series_id: str, start_date: str, end_date: str) -> pd.DataFrame:
     """Fetch FRED series data."""
     try:
-        result = await obb.economy.fred_series(
-            symbol=series_id,
-            start_date=start_date,
-            end_date=end_date,
-        )
+        from openbb import obb
+        result = await _run_obb_sync(obb.economy.fred_series, symbol=series_id, start_date=start_date, end_date=end_date)
         df = result.to_df()
         if not df.empty:
             df = df.sort_values("date")
             df["date"] = pd.to_datetime(df["date"])
         return df
     except Exception as e:
-        raise JSONResponse(content={"error": str(e)}, status_code=500)
-
-
-async def _get_treasury_data(category: str, start_date: str, end_date: str) -> pd.DataFrame:
-    """Fetch Treasury data."""
-    try:
-        result = await obb.fixedincome.government_treasury_rates(
-            start_date=start_date,
-            end_date=end_date,
-        )
-        df = result.to_df()
-        if not df.empty:
-            df = df.sort_values("date")
-            df["date"] = pd.to_datetime(df["date"])
-        return df
-    except Exception as e:
-        raise JSONResponse(content={"error": str(e)}, status_code=500)
+        raise Exception(f"Failed to fetch FRED series: {str(e)}")
 
 
 async def _get_economy_indicator(
@@ -58,7 +44,9 @@ async def _get_economy_indicator(
 ) -> pd.DataFrame:
     """Fetch economy indicator."""
     try:
-        result = await obb.economy.indicators(
+        from openbb import obb
+        result = await _run_obb_sync(
+            obb.economy.indicators,
             symbol=symbol,
             country=country,
             start_date=start_date,
@@ -72,7 +60,7 @@ async def _get_economy_indicator(
             df["date"] = pd.to_datetime(df["date"])
         return df
     except Exception as e:
-        raise JSONResponse(content={"error": str(e)}, status_code=500)
+        raise Exception(f"Failed to fetch economy indicator: {str(e)}")
 
 
 @router.get("/yield-curve")
@@ -119,31 +107,47 @@ async def get_yield_curve(
 ) -> Any:
     """Get yield curve chart."""
     try:
-        result = await obb.fixedincome.government_yield_curve(
-            provider="fred",
-            date=date,
-        )
+        from openbb import obb
+        result = await _run_obb_sync(obb.fixedincome.government.yield_curve, provider="fred", date=date)
         df = result.to_df()
         
         if df.empty:
             return JSONResponse(content={"error": f"No yield curve data for {date}"}, status_code=404)
         
+        # Reset index to get date as column
+        if df.index.name == 'date' or 'date' not in df.columns:
+            df = df.reset_index()
+        
         fig = go.Figure()
         
         # Maturities in order
-        maturities = [
-            ("1 Mo", "month_1"), ("3 Mo", "month_3"), ("6 Mo", "month_6"),
-            ("1 Yr", "year_1"), ("2 Yr", "year_2"), ("3 Yr", "year_3"),
-            ("5 Yr", "year_5"), ("7 Yr", "year_7"), ("10 Yr", "year_10"),
-            ("20 Yr", "year_20"), ("30 Yr", "year_30"),
-        ]
+        maturity_labels = {
+            "month_1": "1 Mo",
+            "month_3": "3 Mo",
+            "month_6": "6 Mo",
+            "year_1": "1 Yr",
+            "year_2": "2 Yr",
+            "year_3": "3 Yr",
+            "year_5": "5 Yr",
+            "year_7": "7 Yr",
+            "year_10": "10 Yr",
+            "year_20": "20 Yr",
+            "year_30": "30 Yr",
+        }
         
-        x_vals = []
-        y_vals = []
-        for label, col in maturities:
-            if col in df.columns and not df[col].isna().all():
-                x_vals.append(label)
-                y_vals.append(df[col].iloc[-1])
+        # Filter and sort by maturity_years
+        curve_df = df[df['maturity'].isin(maturity_labels.keys())].copy()
+        curve_df['maturity_label'] = curve_df['maturity'].map(maturity_labels)
+        curve_df['maturity_order'] = curve_df['maturity'].map({
+            "month_1": 1, "month_3": 2, "month_6": 3,
+            "year_1": 4, "year_2": 5, "year_3": 6,
+            "year_5": 7, "year_7": 8, "year_10": 9,
+            "year_20": 10, "year_30": 11,
+        })
+        curve_df = curve_df.sort_values('maturity_order')
+        
+        x_vals = curve_df['maturity_label'].tolist()
+        y_vals = (curve_df['rate'] * 100).tolist()  # Convert to percentage
         
         fig.add_trace(go.Scatter(
             x=x_vals, y=y_vals, mode="lines+markers",
@@ -157,16 +161,23 @@ async def get_yield_curve(
             for days_ago, color, name in [(365, "#ef5350", "1 Year Ago"), (180, "#ff9800", "6 Months Ago"), (30, "#26a69a", "1 Month Ago")]:
                 hist_date = (datetime.strptime(date, "%Y-%m-%d") - timedelta(days=days_ago)).strftime("%Y-%m-%d")
                 try:
-                    hist_result = await obb.fixedincome.government_yield_curve(provider="fred", date=hist_date)
+                    hist_result = await _run_obb_sync(obb.fixedincome.government.yield_curve, provider="fred", date=hist_date)
                     hist_df = hist_result.to_df()
                     if not hist_df.empty:
-                        hy_vals = []
-                        for label, col in maturities:
-                            if col in hist_df.columns and not hist_df[col].isna().all():
-                                hy_vals.append(hist_df[col].iloc[-1])
-                            else:
-                                hy_vals.append(None)
-                        if any(v is not None for v in hy_vals):
+                        if hist_df.index.name == 'date' or 'date' not in hist_df.columns:
+                            hist_df = hist_df.reset_index()
+                        
+                        hist_curve = hist_df[hist_df['maturity'].isin(maturity_labels.keys())].copy()
+                        hist_curve['maturity_order'] = hist_curve['maturity'].map({
+                            "month_1": 1, "month_3": 2, "month_6": 3,
+                            "year_1": 4, "year_2": 5, "year_3": 6,
+                            "year_5": 7, "year_7": 8, "year_10": 9,
+                            "year_20": 10, "year_30": 11,
+                        })
+                        hist_curve = hist_curve.sort_values('maturity_order')
+                        
+                        hy_vals = (hist_curve['rate'] * 100).tolist()
+                        if len(hy_vals) == len(x_vals):
                             fig.add_trace(go.Scatter(
                                 x=x_vals, y=hy_vals, mode="lines",
                                 name=name, line=dict(color=color, width=1, dash="dash"),
@@ -191,7 +202,7 @@ async def get_yield_curve(
             height=500,
         )
         
-        return fig.to_dict()
+        return json.loads(fig.to_json())
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
@@ -307,7 +318,7 @@ async def get_inflation_dashboard(
         height=800,
     )
     
-    return fig.to_dict()
+    return json.loads(fig.to_json())
 
 
 @router.get("/fed-balance-sheet")
@@ -360,7 +371,9 @@ async def get_fed_balance_sheet(
 ) -> Any:
     """Get Fed balance sheet chart."""
     try:
-        result = await obb.economy.central_bank_holdings(
+        from openbb import obb
+        result = await _run_obb_sync(
+            obb.economy.central_bank_holdings,
             provider="federal_reserve",
             start_date=start_date,
             holding_type="all_treasury",
@@ -415,7 +428,7 @@ async def get_fed_balance_sheet(
             height=600,
         )
         
-        return fig.to_dict()
+        return json.loads(fig.to_json())
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
@@ -508,7 +521,7 @@ async def get_employment_dashboard(
         height=800,
     )
     
-    return fig.to_dict()
+    return json.loads(fig.to_json())
 
 
 @router.get("/macro-table")
