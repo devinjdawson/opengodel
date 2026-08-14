@@ -75,10 +75,14 @@ async def get_openapi_spec() -> dict:
 @app.get("/widgets.json")
 async def get_widgets_json():
     """OpenBB Workspace widget registry endpoint."""
-    return get_widgets()
+    widgets = get_widgets()
+    # Return as array for OpenBB Workspace compatibility
+    return list(widgets.values())
 
 
 @app.get("/templates.json")
 async def get_templates_json():
     """OpenBB Workspace templates endpoint."""
-    return get_templates()
+    templates = get_templates()
+    # Return as array
+    return list(templates.values()) if isinstance(templates, dict) else templates

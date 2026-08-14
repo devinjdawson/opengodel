@@ -30,7 +30,7 @@ async def sync_daily_market_data() -> None:
                 end_date = datetime.now().strftime("%Y-%m-%d")
                 start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
 
-                candles = await openbb_service.get_historical_prices(
+                candles = openbb_service.get_historical_prices(
                     symbol=symbol,
                     start_date=start_date,
                     end_date=end_date,
@@ -69,7 +69,7 @@ async def sync_and_embed_news() -> None:
     symbols = "AAPL,GOOGL,MSFT,AMZN,META,NVDA,TSLA,JPM,V,JNJ"
 
     try:
-        articles = await openbb_service.get_news(symbols=symbols, limit=100)
+        articles = openbb_service.get_news(symbols=symbols, limit=100)
 
         if not articles:
             return
