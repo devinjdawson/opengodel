@@ -12,6 +12,13 @@
         "name": "Overview",
         "layout": [
           {
+            "i": "market-heatmap",
+            "x": 0,
+            "y": 0,
+            "w": 100,
+            "h": 30
+          },
+          {
             "i": "candlestick",
             "x": 0,
             "y": 0,
@@ -273,11 +280,11 @@
     "groups": []
   },
   {
-    "name": "Godel Terminal",
+    "name": "OG Terminal",
     "img": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=300&fit=crop",
     "img_dark": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=300&fit=crop",
     "img_light": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=300&fit=crop",
-    "description": "Godel Terminal command implementations: AL, DES, FA, GR, ERN, INS, IMAPI, DVD",
+    "description": "OG Terminal command implementations: AL, DES, FA, GR, ERN, INS, IMAPI, DVD",
     "allowCustomization": true,
     "tabs": {
       "equity": {

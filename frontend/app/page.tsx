@@ -57,7 +57,7 @@ export default function Page() {
       <div className="flex w-full max-w-4xl flex-col items-center gap-8">
         <div className="text-center">
           <h1 className="mb-4 text-4xl font-bold tracking-tight">
-            OpenGodel <span className="text-primary">Terminal</span>
+            OpenOG <span className="text-primary">Terminal</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl">
             A comprehensive financial terminal built with Next.js 16, shadcn/ui (Base UI),

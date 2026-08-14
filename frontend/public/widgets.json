@@ -1,0 +1,1468 @@
+[
+  {
+    "id": "market-heatmap",
+    "name": "Market Heatmap",
+    "description": "S&P 500 top stocks heatmap by sector and % change",
+    "category": "Market",
+    "endpoint": "market-heatmap",
+    "type": "heatmap",
+    "gridData": {
+      "w": 50,
+      "h": 30
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbols",
+        "value": "default",
+        "label": "Symbol List",
+        "show": true,
+        "type": "text",
+        "description": "S&P500 top 40 / Mega Cap 10 / Tech / Custom CSV",
+        "options": [
+          {
+            "label": "S&P500 Top 40",
+            "value": "default"
+          },
+          {
+            "label": "Mega Cap 10",
+            "value": "mega10"
+          },
+          {
+            "label": "Tech Sector",
+            "value": "tech"
+          }
+        ]
+      },
+      {
+        "paramName": "provider",
+        "value": "yfinance",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "description": "Data provider",
+        "options": [
+          {
+            "label": "YFinance",
+            "value": "yfinance"
+          },
+          {
+            "label": "FMP",
+            "value": "fmp"
+          }
+        ]
+      },
+      {
+        "paramName": "refresh_interval",
+        "value": 300,
+        "label": "Refresh (s)",
+        "show": true,
+        "type": "number",
+        "description": "Auto-refresh interval in seconds (0 = disabled)"
+      }
+    ]
+  },
+  {
+    "name": "Candlestick Chart",
+    "description": "Interactive candlestick chart with volume",
+    "category": "Equity",
+    "endpoint": "candlestick",
+    "id": "candlestick",
+    "type": "chart",
+    "gridData": {
+      "w": 50,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "description": "Stock symbol to display",
+        "type": "text"
+      },
+      {
+        "paramName": "start_date",
+        "value": "2025-08-14",
+        "label": "Start Date",
+        "show": true,
+        "description": "Start date for data",
+        "type": "date"
+      },
+      {
+        "paramName": "end_date",
+        "value": "2026-08-14",
+        "label": "End Date",
+        "show": true,
+        "description": "End date for data",
+        "type": "date"
+      },
+      {
+        "paramName": "interval",
+        "value": "1d",
+        "label": "Interval",
+        "show": true,
+        "description": "Data interval",
+        "type": "text",
+        "options": [
+          {
+            "label": "1 Minute",
+            "value": "1m"
+          },
+          {
+            "label": "5 Minutes",
+            "value": "5m"
+          },
+          {
+            "label": "15 Minutes",
+            "value": "15m"
+          },
+          {
+            "label": "1 Hour",
+            "value": "1h"
+          },
+          {
+            "label": "1 Day",
+            "value": "1d"
+          },
+          {
+            "label": "1 Week",
+            "value": "1wk"
+          },
+          {
+            "label": "1 Month",
+            "value": "1mo"
+          }
+        ]
+      },
+      {
+        "paramName": "show_volume",
+        "value": true,
+        "label": "Show Volume",
+        "show": true,
+        "description": "Display volume bars",
+        "type": "boolean"
+      },
+      {
+        "paramName": "show_ma",
+        "value": true,
+        "label": "Show Moving Averages",
+        "show": true,
+        "description": "Display 20/50/200 day MAs",
+        "type": "boolean"
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "description": "Chart theme",
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Technical Indicators",
+    "description": "RSI, MACD, Bollinger Bands, and Stochastic",
+    "category": "Equity",
+    "endpoint": "technical-indicators",
+    "id": "technical-indicators",
+    "type": "chart",
+    "gridData": {
+      "w": 50,
+      "h": 30
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "description": "Stock symbol",
+        "type": "text"
+      },
+      {
+        "paramName": "start_date",
+        "value": "2025-08-14",
+        "label": "Start Date",
+        "show": true,
+        "type": "date"
+      },
+      {
+        "paramName": "indicators",
+        "value": "RSI,MACD,BB",
+        "label": "Indicators",
+        "show": true,
+        "description": "Comma-separated indicators",
+        "type": "text"
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Quote Summary",
+    "description": "Real-time quote with key statistics",
+    "category": "Equity",
+    "endpoint": "quote-summary",
+    "id": "quote-summary",
+    "type": "table",
+    "gridData": {
+      "w": 25,
+      "h": 20
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "name": "US Treasury Yield Curve",
+    "description": "Current and historical yield curve",
+    "category": "Macro",
+    "endpoint": "yield-curve",
+    "id": "yield-curve",
+    "type": "chart",
+    "gridData": {
+      "w": 40,
+      "h": 20
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "date",
+        "value": "2026-08-14",
+        "label": "Date",
+        "show": true,
+        "type": "date"
+      },
+      {
+        "paramName": "show_history",
+        "value": true,
+        "label": "Show Historical",
+        "show": true,
+        "type": "boolean"
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Inflation Dashboard",
+    "description": "CPI, PCE, PPI with YoY and MoM changes",
+    "category": "Macro",
+    "endpoint": "inflation-dashboard",
+    "id": "inflation-dashboard",
+    "type": "chart",
+    "gridData": {
+      "w": 50,
+      "h": 30
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "start_date",
+        "value": "2021-08-14",
+        "label": "Start Date",
+        "show": true,
+        "type": "date"
+      },
+      {
+        "paramName": "indicators",
+        "value": "CPI,PCE,PPI",
+        "label": "Indicators",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "transform",
+        "value": "yoy",
+        "label": "Transform",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "YoY %",
+            "value": "yoy"
+          },
+          {
+            "label": "MoM %",
+            "value": "period"
+          },
+          {
+            "label": "Index",
+            "value": "index"
+          }
+        ]
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Fed Balance Sheet",
+    "description": "Federal Reserve assets and liabilities",
+    "category": "Macro",
+    "endpoint": "fed-balance-sheet",
+    "id": "fed-balance-sheet",
+    "type": "chart",
+    "gridData": {
+      "w": 50,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "start_date",
+        "value": "2016-08-14",
+        "label": "Start Date",
+        "show": true,
+        "type": "date"
+      },
+      {
+        "paramName": "view",
+        "value": "stacked",
+        "label": "View",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Stacked",
+            "value": "stacked"
+          },
+          {
+            "label": "Assets Only",
+            "value": "assets"
+          },
+          {
+            "label": "Liabilities Only",
+            "value": "liabilities"
+          },
+          {
+            "label": "Net Liquidity",
+            "value": "net_liquidity"
+          }
+        ]
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Employment Dashboard",
+    "description": "Nonfarm payrolls, unemployment rate, labor force participation",
+    "category": "Macro",
+    "endpoint": "employment-dashboard",
+    "id": "employment-dashboard",
+    "type": "chart",
+    "gridData": {
+      "w": 50,
+      "h": 30
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "start_date",
+        "value": "2021-08-14",
+        "label": "Start Date",
+        "show": true,
+        "type": "date"
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Macro Indicators Table",
+    "description": "Latest values for key macro indicators",
+    "category": "Macro",
+    "endpoint": "macro-table",
+    "id": "macro-table",
+    "type": "table",
+    "gridData": {
+      "w": 30,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Latest News",
+    "description": "Latest financial news articles",
+    "category": "News",
+    "endpoint": "latest-articles",
+    "id": "latest-articles",
+    "type": "table",
+    "gridData": {
+      "w": 40,
+      "h": 20
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "",
+        "label": "Symbol Filter",
+        "show": true,
+        "description": "Filter by stock symbol (empty for all)",
+        "type": "text"
+      },
+      {
+        "paramName": "limit",
+        "value": 20,
+        "label": "Limit",
+        "show": true,
+        "description": "Number of articles to show",
+        "type": "number"
+      }
+    ]
+  },
+  {
+    "name": "Semantic News Search",
+    "description": "AI-powered semantic search for financial news",
+    "category": "News",
+    "endpoint": "semantic-search",
+    "id": "semantic-search",
+    "type": "table",
+    "gridData": {
+      "w": 50,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "query",
+        "value": "earnings beat",
+        "label": "Search Query",
+        "show": true,
+        "description": "Natural language search query",
+        "type": "text"
+      },
+      {
+        "paramName": "symbol",
+        "value": "",
+        "label": "Symbol Filter",
+        "show": true,
+        "description": "Filter by stock symbol",
+        "type": "text"
+      },
+      {
+        "paramName": "limit",
+        "value": 10,
+        "label": "Limit",
+        "show": true,
+        "description": "Number of results",
+        "type": "number"
+      }
+    ]
+  },
+  {
+    "name": "News Sentiment Analysis",
+    "description": "Sentiment distribution for a symbol's recent news",
+    "category": "News",
+    "endpoint": "sentiment-analysis",
+    "id": "sentiment-analysis",
+    "type": "chart",
+    "gridData": {
+      "w": 30,
+      "h": 20
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "days",
+        "value": 7,
+        "label": "Lookback Days",
+        "show": true,
+        "type": "number"
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Available News Symbols",
+    "description": "Symbols with available news coverage",
+    "category": "News",
+    "endpoint": "news-symbols",
+    "id": "news-symbols",
+    "type": "table",
+    "gridData": {
+      "w": 20,
+      "h": 30
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": []
+  },
+  {
+    "name": "Volatility Surface",
+    "description": "3D implied volatility surface across strikes and expirations",
+    "category": "Options",
+    "endpoint": "volatility-surface",
+    "id": "volatility-surface",
+    "type": "chart",
+    "gridData": {
+      "w": 50,
+      "h": 30
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "SPY",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "provider",
+        "value": "cboe",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "CBOE",
+            "value": "cboe"
+          },
+          {
+            "label": "YFinance",
+            "value": "yfinance"
+          }
+        ]
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Option Chain",
+    "description": "Options chain with Greeks and IV",
+    "category": "Options",
+    "endpoint": "option-chain",
+    "id": "option-chain",
+    "type": "table",
+    "gridData": {
+      "w": 60,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "expiration",
+        "value": "",
+        "label": "Expiration",
+        "show": true,
+        "description": "Expiration date (YYYY-MM-DD)",
+        "type": "date"
+      },
+      {
+        "paramName": "provider",
+        "value": "cboe",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "CBOE",
+            "value": "cboe"
+          },
+          {
+            "label": "YFinance",
+            "value": "yfinance"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "IV Term Structure",
+    "description": "Implied volatility by expiration (ATM)",
+    "category": "Options",
+    "endpoint": "iv-term-structure",
+    "id": "iv-term-structure",
+    "type": "chart",
+    "gridData": {
+      "w": 40,
+      "h": 20
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "SPY",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "provider",
+        "value": "cboe",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "CBOE",
+            "value": "cboe"
+          },
+          {
+            "label": "YFinance",
+            "value": "yfinance"
+          }
+        ]
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Greeks Dashboard",
+    "description": "Option Greeks analysis for a position",
+    "category": "Options",
+    "endpoint": "greeks-dashboard",
+    "id": "greeks-dashboard",
+    "type": "chart",
+    "gridData": {
+      "w": 40,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "expiration",
+        "value": "",
+        "label": "Expiration",
+        "show": true,
+        "type": "date"
+      },
+      {
+        "paramName": "strike",
+        "value": 0,
+        "label": "Strike (0=ATM)",
+        "show": true,
+        "type": "number"
+      },
+      {
+        "paramName": "option_type",
+        "value": "call",
+        "label": "Option Type",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Call",
+            "value": "call"
+          },
+          {
+            "label": "Put",
+            "value": "put"
+          }
+        ]
+      },
+      {
+        "paramName": "provider",
+        "value": "cboe",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "CBOE",
+            "value": "cboe"
+          },
+          {
+            "label": "YFinance",
+            "value": "yfinance"
+          }
+        ]
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Portfolio Performance",
+    "description": "Portfolio returns, drawdown, and risk metrics",
+    "category": "Portfolio",
+    "endpoint": "performance",
+    "id": "performance",
+    "type": "chart",
+    "gridData": {
+      "w": 50,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbols",
+        "value": "AAPL,GOOGL,MSFT",
+        "label": "Symbols (comma-separated)",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "weights",
+        "value": "0.33,0.33,0.34",
+        "label": "Weights (comma-separated, sum=1)",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "start_date",
+        "value": "2025-08-14",
+        "label": "Start Date",
+        "show": true,
+        "type": "date"
+      },
+      {
+        "paramName": "benchmark",
+        "value": "SPY",
+        "label": "Benchmark",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Portfolio Allocation",
+    "description": "Current portfolio allocation by symbol/sector",
+    "category": "Portfolio",
+    "endpoint": "allocation",
+    "id": "allocation",
+    "type": "chart",
+    "gridData": {
+      "w": 30,
+      "h": 20
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbols",
+        "value": "AAPL,GOOGL,MSFT",
+        "label": "Symbols",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "weights",
+        "value": "0.33,0.33,0.34",
+        "label": "Weights",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Correlation Matrix",
+    "description": "Asset correlation heatmap",
+    "category": "Portfolio",
+    "endpoint": "correlation-matrix",
+    "id": "correlation-matrix",
+    "type": "chart",
+    "gridData": {
+      "w": 35,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbols",
+        "value": "AAPL,GOOGL,MSFT,AMZN,META,NVDA",
+        "label": "Symbols",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "start_date",
+        "value": "2025-08-14",
+        "label": "Start Date",
+        "show": true,
+        "type": "date"
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Risk Metrics Table",
+    "description": "VaR, CVaR, Beta, and other risk metrics",
+    "category": "Portfolio",
+    "endpoint": "risk-metrics",
+    "id": "risk-metrics",
+    "type": "table",
+    "gridData": {
+      "w": 35,
+      "h": 20
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbols",
+        "value": "AAPL,GOOGL,MSFT",
+        "label": "Symbols",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "weights",
+        "value": "0.33,0.33,0.34",
+        "label": "Weights",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "confidence",
+        "value": 0.95,
+        "label": "Confidence Level",
+        "show": true,
+        "type": "number"
+      }
+    ]
+  },
+  {
+    "name": "Equity Search (OG AL)",
+    "description": "Search for equities by symbol or name (AL command)",
+    "category": "OG Terminal",
+    "endpoint": "equity-search",
+    "id": "equity-search",
+    "type": "table",
+    "gridData": {
+      "w": 40,
+      "h": 20
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "query",
+        "value": "AAPL",
+        "label": "Search Query",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "provider",
+        "value": "yfinance",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "YFinance",
+            "value": "yfinance"
+          },
+          {
+            "label": "FMP",
+            "value": "fmp"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Company Profile (OG DES)",
+    "description": "Company description and key info (DES command)",
+    "category": "OG Terminal",
+    "endpoint": "company-profile",
+    "id": "company-profile",
+    "type": "table",
+    "gridData": {
+      "w": 40,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "provider",
+        "value": "yfinance",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "YFinance",
+            "value": "yfinance"
+          },
+          {
+            "label": "FMP",
+            "value": "fmp"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Financial Statements (OG FA)",
+    "description": "Income statement, balance sheet, cash flow (FA command)",
+    "category": "OG Terminal",
+    "endpoint": "financial-statements",
+    "id": "financial-statements",
+    "type": "table",
+    "gridData": {
+      "w": 50,
+      "h": 30
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "statement",
+        "value": "income",
+        "label": "Statement",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Income Statement",
+            "value": "income"
+          },
+          {
+            "label": "Balance Sheet",
+            "value": "balance"
+          },
+          {
+            "label": "Cash Flow",
+            "value": "cash"
+          }
+        ]
+      },
+      {
+        "paramName": "period",
+        "value": "annual",
+        "label": "Period",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Annual",
+            "value": "annual"
+          },
+          {
+            "label": "Quarterly",
+            "value": "quarter"
+          },
+          {
+            "label": "TTM",
+            "value": "ttm"
+          }
+        ]
+      },
+      {
+        "paramName": "provider",
+        "value": "fmp",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "FMP",
+            "value": "fmp"
+          },
+          {
+            "label": "YFinance",
+            "value": "yfinance"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Key Statistics (OG GR)",
+    "description": "Growth ratios and key metrics (GR command)",
+    "category": "OG Terminal",
+    "endpoint": "key-stats",
+    "id": "key-stats",
+    "type": "table",
+    "gridData": {
+      "w": 40,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "provider",
+        "value": "fmp",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "FMP",
+            "value": "fmp"
+          },
+          {
+            "label": "YFinance",
+            "value": "yfinance"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Analyst Estimates (OG ERN)",
+    "description": "Earnings estimates and revisions (ERN command)",
+    "category": "OG Terminal",
+    "endpoint": "analyst-estimates",
+    "id": "analyst-estimates",
+    "type": "table",
+    "gridData": {
+      "w": 45,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "provider",
+        "value": "fmp",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "FMP",
+            "value": "fmp"
+          },
+          {
+            "label": "YFinance",
+            "value": "yfinance"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Insider Trading (OG INS)",
+    "description": "Insider transactions (INS command)",
+    "category": "OG Terminal",
+    "endpoint": "insider-trading",
+    "id": "insider-trading",
+    "type": "table",
+    "gridData": {
+      "w": 50,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "limit",
+        "value": 50,
+        "label": "Limit",
+        "show": true,
+        "type": "number"
+      },
+      {
+        "paramName": "provider",
+        "value": "fmp",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "FMP",
+            "value": "fmp"
+          },
+          {
+            "label": "SEC",
+            "value": "sec"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Institutional Ownership (OG IMAPI)",
+    "description": "13F institutional holdings (IMAPI command)",
+    "category": "OG Terminal",
+    "endpoint": "institutional-ownership",
+    "id": "institutional-ownership",
+    "type": "table",
+    "gridData": {
+      "w": 50,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "provider",
+        "value": "fmp",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "FMP",
+            "value": "fmp"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Dividend History (OG DVD)",
+    "description": "Dividend payments and yield history (DVD command)",
+    "category": "OG Terminal",
+    "endpoint": "dividend-history",
+    "id": "dividend-history",
+    "type": "chart",
+    "gridData": {
+      "w": 40,
+      "h": 25
+    },
+    "source": "OpenBB",
+    "data": {},
+    "params": [
+      {
+        "paramName": "symbol",
+        "value": "AAPL",
+        "label": "Symbol",
+        "show": true,
+        "type": "text"
+      },
+      {
+        "paramName": "provider",
+        "value": "fmp",
+        "label": "Provider",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "FMP",
+            "value": "fmp"
+          },
+          {
+            "label": "YFinance",
+            "value": "yfinance"
+          }
+        ]
+      },
+      {
+        "paramName": "theme",
+        "value": "dark",
+        "label": "Theme",
+        "show": true,
+        "type": "text",
+        "options": [
+          {
+            "label": "Dark",
+            "value": "dark"
+          },
+          {
+            "label": "Light",
+            "value": "light"
+          }
+        ]
+      }
+    ]
+  }
+]

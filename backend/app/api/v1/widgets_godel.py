@@ -9,7 +9,7 @@ from plotly.subplots import make_subplots
 from app.core.config import settings
 from app.core.widget_registry import register_widget, create_base_widget_config, WidgetResponse
 
-router = APIRouter(prefix="/widgets/godel", tags=["godel terminal widgets"])
+router = APIRouter(prefix="/widgets/og", tags=["og terminal widgets"])
 
 from openbb import obb
 
@@ -17,9 +17,9 @@ from openbb import obb
 @router.get("/equity-search")
 @register_widget(
     create_base_widget_config(
-        name="Equity Search (Godel AL)",
+        name="Equity Search (OG AL)",
         description="Search for equities by symbol or name (AL command)",
-        category="Godel Terminal",
+        category="OG Terminal",
         endpoint="equity-search",
         widget_type="table",
         grid_w=40,
@@ -43,11 +43,11 @@ from openbb import obb
         ],
     )
 )
-async def godel_equity_search(
+async def og_equity_search(
     query: str = Query("AAPL"),
     provider: str = Query("yfinance"),
 ) -> Any:
-    """Godel AL command - equity search."""
+    """OG AL command - equity search."""
     try:
         result = await obb.equity.search(query=query, provider=provider)
         df = result.to_df()
@@ -69,9 +69,9 @@ async def godel_equity_search(
 @router.get("/company-profile")
 @register_widget(
     create_base_widget_config(
-        name="Company Profile (Godel DES)",
+        name="Company Profile (OG DES)",
         description="Company description and key info (DES command)",
-        category="Godel Terminal",
+        category="OG Terminal",
         endpoint="company-profile",
         widget_type="table",
         grid_w=40,
@@ -95,11 +95,11 @@ async def godel_equity_search(
         ],
     )
 )
-async def godel_company_profile(
+async def og_company_profile(
     symbol: str = Query("AAPL"),
     provider: str = Query("yfinance"),
 ) -> Any:
-    """Godel DES command - company profile."""
+    """OG DES command - company profile."""
     try:
         result = await obb.equity.profile(symbol=symbol.upper(), provider=provider)
         df = result.to_df()
@@ -122,9 +122,9 @@ async def godel_company_profile(
 @router.get("/financial-statements")
 @register_widget(
     create_base_widget_config(
-        name="Financial Statements (Godel FA)",
+        name="Financial Statements (OG FA)",
         description="Income statement, balance sheet, cash flow (FA command)",
-        category="Godel Terminal",
+        category="OG Terminal",
         endpoint="financial-statements",
         widget_type="table",
         grid_w=50,
@@ -172,13 +172,13 @@ async def godel_company_profile(
         ],
     )
 )
-async def godel_financial_statements(
+async def og_financial_statements(
     symbol: str = Query("AAPL"),
     statement: str = Query("income"),
     period: str = Query("annual"),
     provider: str = Query("fmp"),
 ) -> Any:
-    """Godel FA command - financial statements."""
+    """OG FA command - financial statements."""
     try:
         if statement == "income":
             result = await obb.equity.fundamental.income(symbol=symbol.upper(), period=period, provider=provider)
@@ -212,9 +212,9 @@ async def godel_financial_statements(
 @router.get("/key-stats")
 @register_widget(
     create_base_widget_config(
-        name="Key Statistics (Godel GR)",
+        name="Key Statistics (OG GR)",
         description="Growth ratios and key metrics (GR command)",
-        category="Godel Terminal",
+        category="OG Terminal",
         endpoint="key-stats",
         widget_type="table",
         grid_w=40,
@@ -238,11 +238,11 @@ async def godel_financial_statements(
         ],
     )
 )
-async def godel_key_stats(
+async def og_key_stats(
     symbol: str = Query("AAPL"),
     provider: str = Query("fmp"),
 ) -> Any:
-    """Godel GR command - key statistics and ratios."""
+    """OG GR command - key statistics and ratios."""
     try:
         result = await obb.equity.fundamental.metrics(symbol=symbol.upper(), provider=provider)
         df = result.to_df()
@@ -290,9 +290,9 @@ async def godel_key_stats(
 @router.get("/analyst-estimates")
 @register_widget(
     create_base_widget_config(
-        name="Analyst Estimates (Godel ERN)",
+        name="Analyst Estimates (OG ERN)",
         description="Earnings estimates and revisions (ERN command)",
-        category="Godel Terminal",
+        category="OG Terminal",
         endpoint="analyst-estimates",
         widget_type="table",
         grid_w=45,
@@ -316,11 +316,11 @@ async def godel_key_stats(
         ],
     )
 )
-async def godel_analyst_estimates(
+async def og_analyst_estimates(
     symbol: str = Query("AAPL"),
     provider: str = Query("fmp"),
 ) -> Any:
-    """Godel ERN command - analyst estimates."""
+    """OG ERN command - analyst estimates."""
     try:
         result = await obb.equity.estimates.forward_eps(symbol=symbol.upper(), provider=provider)
         df = result.to_df()
@@ -344,9 +344,9 @@ async def godel_analyst_estimates(
 @router.get("/insider-trading")
 @register_widget(
     create_base_widget_config(
-        name="Insider Trading (Godel INS)",
+        name="Insider Trading (OG INS)",
         description="Insider transactions (INS command)",
-        category="Godel Terminal",
+        category="OG Terminal",
         endpoint="insider-trading",
         widget_type="table",
         grid_w=50,
@@ -377,12 +377,12 @@ async def godel_analyst_estimates(
         ],
     )
 )
-async def godel_insider_trading(
+async def og_insider_trading(
     symbol: str = Query("AAPL"),
     limit: int = Query(50),
     provider: str = Query("fmp"),
 ) -> Any:
-    """Godel INS command - insider trading."""
+    """OG INS command - insider trading."""
     try:
         result = await obb.equity.ownership.insider_trading(symbol=symbol.upper(), provider=provider, limit=limit)
         df = result.to_df()
@@ -408,9 +408,9 @@ async def godel_insider_trading(
 @router.get("/institutional-ownership")
 @register_widget(
     create_base_widget_config(
-        name="Institutional Ownership (Godel IMAPI)",
+        name="Institutional Ownership (OG IMAPI)",
         description="13F institutional holdings (IMAPI command)",
-        category="Godel Terminal",
+        category="OG Terminal",
         endpoint="institutional-ownership",
         widget_type="table",
         grid_w=50,
@@ -434,11 +434,11 @@ async def godel_insider_trading(
         ],
     )
 )
-async def godel_institutional_ownership(
+async def og_institutional_ownership(
     symbol: str = Query("AAPL"),
     provider: str = Query("fmp"),
 ) -> Any:
-    """Godel IMAPI command - institutional ownership."""
+    """OG IMAPI command - institutional ownership."""
     try:
         result = await obb.equity.ownership.institutional(symbol=symbol.upper(), provider=provider)
         df = result.to_df()
@@ -462,9 +462,9 @@ async def godel_institutional_ownership(
 @router.get("/dividend-history")
 @register_widget(
     create_base_widget_config(
-        name="Dividend History (Godel DVD)",
+        name="Dividend History (OG DVD)",
         description="Dividend payments and yield history (DVD command)",
-        category="Godel Terminal",
+        category="OG Terminal",
         endpoint="dividend-history",
         widget_type="chart",
         chart_type="bar",
@@ -497,12 +497,12 @@ async def godel_institutional_ownership(
         ],
     )
 )
-async def godel_dividend_history(
+async def og_dividend_history(
     symbol: str = Query("AAPL"),
     provider: str = Query("fmp"),
     theme: str = Query("dark"),
 ) -> Any:
-    """Godel DVD command - dividend history."""
+    """OG DVD command - dividend history."""
     try:
         result = await obb.equity.fundamental.dividends(symbol=symbol.upper(), provider=provider)
         df = result.to_df()

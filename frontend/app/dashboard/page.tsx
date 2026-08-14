@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, RefreshCw, Search, ChevronDown, ChevronUp, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, ChevronLeft, ChevronRight, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, Settings as SettingsIcon } from "lucide-react";
+import { Loader2, RefreshCw, Search, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, ChevronLeft, ChevronRight, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WidgetConfig {
@@ -17,7 +16,7 @@ interface WidgetConfig {
   name: string;
   description: string;
   category: string;
-  type: "chart" | "table";
+  type: "chart" | "table" | "heatmap";
   endpoint: string;
   gridData: { w: number; h: number };
   source: string;
@@ -64,16 +63,14 @@ interface ChatMessage {
   widgets?: string[];
 }
 
-// Use relative paths for Next.js rewrites to work
-const API_BASE = "";
-
 const CATEGORIES = [
   { id: "equity", name: "Equity", icon: BarChart3 },
+  { id: "market", name: "Market", icon: TrendingUp },
   { id: "macro", name: "Macro", icon: LineChart },
   { id: "news", name: "News", icon: MessageSquare },
   { id: "options", name: "Options", icon: PieChart },
   { id: "portfolio", name: "Portfolio", icon: Table },
-  { id: "godel", name: "Godel Terminal", icon: Settings },
+  { id: "og", name: "OG Terminal", icon: Settings },
 ];
 
 export default function DashboardPage() {
@@ -100,7 +97,7 @@ export default function DashboardPage() {
     {
       id: "1",
       role: "assistant",
-      content: "Welcome to Godel Terminal! I'm your AI financial assistant. Ask me about stocks, market data, technical analysis, or create custom widgets.",
+      content: "Welcome to OG Terminal! I'm your AI financial assistant. Ask me about stocks, market data, technical analysis, or create custom widgets.",
       timestamp: new Date(),
     }
   ]);
@@ -117,33 +114,69 @@ export default function DashboardPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
+  // Auto-refresh heatmap at configured interval
+  useEffect(() => {
+    const template = getTemplate();
+    const tab = getCurrentTab();
+    if (!template || !tab) return;
+    
+    const heatmapItem = tab.layout.find(item => item.i === "market-heatmap");
+    if (!heatmapItem) return;
+    
+    const state = widgetStates["market-heatmap"];
+    if (!state) return;
+    
+    const refreshSec = Number(state.params?.refresh_interval || 0);
+    if (!refreshSec || refreshSec <= 0) return;
+    
+    const interval = setInterval(() => {
+      fetchWidgetData("market-heatmap");
+    }, refreshSec * 1000);
+    
+    return () => clearInterval(interval);
+  }, [activeTemplate, activeTab, widgetStates]);
+
   const loadWidgetsAndTemplates = async () => {
     try {
       const [widgetsRes, templatesRes] = await Promise.all([
-        fetch(`/widgets.json`),
-        fetch(`/templates.json`),
+        fetch('/api/widgets'),
+        fetch('/api/templates'),
       ]);
       
-      const widgetsData = await widgetsRes.json();
-      const templatesData = await templatesRes.json();
+      if (!widgetsRes.ok && !templatesRes.ok) {
+        console.warn("Failed to fetch widgets/templates, using empty state");
+      }
       
-      // Convert widgets array to object keyed by endpoint
+      let rawWidgets: any = null;
+      let templatesData: any = null;
+      
+      if (widgetsRes.ok) rawWidgets = await widgetsRes.json();
+      if (templatesRes.ok) templatesData = await templatesRes.json();
+      
+      let widgetsArray: any[];
+      if (Array.isArray(rawWidgets)) {
+        widgetsArray = rawWidgets;
+      } else if (rawWidgets && typeof rawWidgets === "object") {
+        widgetsArray = Object.values(rawWidgets);
+      } else {
+        widgetsArray = [];
+      }
+      
       const widgetsObj: Record<string, WidgetConfig> = {};
-      for (const widget of widgetsData) {
-        widgetsObj[widget.endpoint] = widget;
+      for (const widget of widgetsArray) {
+        if (widget.endpoint) widgetsObj[widget.endpoint] = widget;
       }
       
       setWidgets(widgetsObj);
-      setTemplates(templatesData);
+      setTemplates(Array.isArray(templatesData) ? templatesData : []);
       
-      // Initialize widget states
       const initialStates: Record<string, WidgetState> = {};
-      for (const widget of widgetsData) {
+      for (const widget of widgetsArray) {
+        if (!widget.endpoint) continue;
         const params: Record<string, string | number | boolean> = {};
-        for (const param of widget.params) {
+        for (const param of widget.params || []) {
           params[param.paramName] = param.value;
         }
-        // Override with global params if matching
         for (const [key, value] of Object.entries(globalParams)) {
           if (params.hasOwnProperty(key)) {
             params[key] = value;
@@ -406,6 +439,10 @@ export default function DashboardPage() {
       return <PlotlyChart data={state.data} />;
     }
 
+    if (widget.type === "heatmap" && state.data) {
+      return <StockHeatmap data={state.data} />;
+    }
+
     if (widget.type === "table" && state.data) {
       return <DataTable data={state.data} columns={widget.data?.table?.columnsDefs || []} />;
     }
@@ -440,7 +477,7 @@ export default function DashboardPage() {
               );
             case "number":
               return (
-                <div className="flex items-center gap-1">
+                <div key={param.paramName} className="flex items-center gap-1">
                   <label className="text-sm text-muted-foreground">{param.label}</label>
                   <input
                     type="number"
@@ -452,7 +489,7 @@ export default function DashboardPage() {
               );
             case "date":
               return (
-                <div className="flex items-center gap-1">
+                <div key={param.paramName} className="flex items-center gap-1">
                   <label className="text-sm text-muted-foreground">{param.label}</label>
                   <input
                     type="date"
@@ -466,7 +503,7 @@ export default function DashboardPage() {
             default:
               if (param.options && param.options.length > 0) {
                 return (
-                  <div className="flex items-center gap-1">
+                  <div key={param.paramName} className="flex items-center gap-1">
                     <label className="text-sm text-muted-foreground">{param.label}</label>
                     <Select
                       value={String(value)}
@@ -487,7 +524,7 @@ export default function DashboardPage() {
                 );
               }
               return (
-                <div className="flex items-center gap-1">
+                <div key={param.paramName} className="flex items-center gap-1">
                   <label className="text-sm text-muted-foreground">{param.label}</label>
                   <input
                     type="text"
@@ -528,54 +565,56 @@ export default function DashboardPage() {
   const isWidgetOnDashboard = (endpoint: string) => layout.some(item => item.i === endpoint);
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-dvh bg-background overflow-hidden">
       {/* Left Sidebar - Widget Library / Navigation */}
       <aside
         className={cn(
-          "flex flex-col border-r bg-card transition-all duration-300",
+          "flex flex-col border-r bg-card flex-shrink-0 overflow-hidden",
           leftSidebarOpen ? "w-80" : "w-16"
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b p-4">
+        <div className="flex h-16 flex-shrink-0 items-center justify-between border-b px-4">
           {leftSidebarOpen && (
-            <h2 className="text-lg font-semibold">Widget Library</h2>
+            <h2 className="text-lg font-semibold truncate">Widget Library</h2>
           )}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
-            className="h-8 w-8"
+            className="size-8"
             aria-label={leftSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
           >
-            {leftSidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            {leftSidebarOpen ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
           </Button>
         </div>
 
         {leftSidebarOpen && (
-          <div className="flex-1 overflow-hidden flex flex-col">
-            {/* Category Tabs */}
-            <div className="border-b p-2">
-              <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-                <TabsList className="grid w-full gap-1 bg-muted p-1" role="tablist">
-                  {CATEGORIES.map(cat => (
-                    <TabsTrigger
-                      key={cat.id}
-                      value={cat.id}
-                      className="flex items-center justify-center gap-1 text-xs py-2"
-                      role="tab"
-                    >
-                      <cat.icon className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">{cat.name}</span>
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Category Tabs - Use buttons instead of Base UI Tabs */}
+            <div className="flex-shrink-0 border-b p-2">
+              <div className="grid grid-cols-3 gap-1">
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={cn(
+                      "flex items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors",
+                      activeCategory === cat.id
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <cat.icon className="size-3.5" />
+                    <span>{cat.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Search */}
-            <div className="p-2">
+            <div className="flex-shrink-0 p-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
                 <Input
                   placeholder="Search widgets..."
                   value={widgetSearch}
@@ -586,68 +625,77 @@ export default function DashboardPage() {
             </div>
 
             {/* Widget List */}
-            <ScrollArea className="flex-1 p-2">
-              <div className="space-y-2">
-                {filteredWidgets.map(widget => {
-                  const onDashboard = isWidgetOnDashboard(widget.endpoint);
-                  return (
-                    <Card
-                      key={widget.endpoint}
-                      className={cn(
-                        "p-3 cursor-pointer transition-all hover:shadow-md",
-                        onDashboard && "ring-2 ring-primary bg-primary/5"
-                      )}
-                      onClick={() => onDashboard ? removeWidgetFromDashboard(widget.endpoint) : addWidgetToDashboard(widget.endpoint)}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground uppercase">{widget.category}</span>
-                            <h4 className="font-medium text-sm truncate">{widget.name}</h4>
+            <div className="flex-1 min-h-0 overflow-y-auto p-2">
+              <div className="flex flex-col gap-2">
+                {filteredWidgets.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground text-center">
+                    <Grid className="size-8 mb-2 opacity-50" />
+                    <p className="text-sm font-medium">No widgets found</p>
+                    <p className="text-xs mt-1">
+                      {Object.keys(widgets).length === 0
+                        ? "Start the backend to load widgets"
+                        : "Try a different category or search term"}
+                    </p>
+                  </div>
+                ) : (
+                  filteredWidgets.map(widget => {
+                    const onDashboard = isWidgetOnDashboard(widget.endpoint);
+                    return (
+                      <Card
+                        key={widget.endpoint}
+                        className={cn(
+                          "p-3 cursor-pointer transition-colors hover:shadow-md group",
+                          onDashboard && "ring-2 ring-primary bg-primary/5"
+                        )}
+                        onClick={() => onDashboard ? removeWidgetFromDashboard(widget.endpoint) : addWidgetToDashboard(widget.endpoint)}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">{widget.category}</Badge>
+                              <h4 className="font-medium text-sm truncate">{widget.name}</h4>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{widget.description}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                {widget.type === "chart" ? "Chart" : "Table"}
+                              </Badge>
+                              {onDashboard && (
+                                <Badge variant="default" className="text-[10px] px-1.5 py-0">
+                                  Added
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1 truncate">{widget.description}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className={cn(
-                              "px-1.5 py-0.5 text-xs rounded",
-                              widget.type === "chart" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
-                            )}>
-                              {widget.type === "chart" ? "Chart" : "Table"}
-                            </span>
-                            {onDashboard && (
-                              <span className="px-1.5 py-0.5 text-xs rounded bg-primary/10 text-primary">
-                                Added
-                              </span>
-                            )}
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={e => { e.stopPropagation(); onDashboard ? removeWidgetFromDashboard(widget.endpoint) : addWidgetToDashboard(widget.endpoint); }}
+                          >
+                            {onDashboard ? <X className="size-4 text-destructive" /> : <Plus className="size-4" />}
+                          </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={e => { e.stopPropagation(); onDashboard ? removeWidgetFromDashboard(widget.endpoint) : addWidgetToDashboard(widget.endpoint); }}
-                        >
-                          {onDashboard ? <X className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4 text-primary" />}
-                        </Button>
-                      </div>
-                    </Card>
-                  );
-                })}
+                      </Card>
+                    );
+                  })
+                )}
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Quick Actions */}
-            <Separator className="mx-2" />
-            <div className="p-2 space-y-1">
-              <Button variant="outline" className="w-full justify-start gap-2 text-sm" onClick={() => setRightSidebarOpen(true)}>
-                <Bot className="h-4 w-4" />
+            <Separator />
+            <div className="flex-shrink-0 p-2 flex flex-col gap-1">
+              <Button variant="outline" size="sm" className="w-full justify-start gap-2 text-sm" onClick={() => setRightSidebarOpen(true)}>
+                <Bot className="size-4" />
                 Open AI Assistant
               </Button>
-              <Button variant="outline" className="w-full justify-start gap-2 text-sm">
-                <FolderOpen className="h-4 w-4" />
+              <Button variant="outline" size="sm" className="w-full justify-start gap-2 text-sm">
+                <FolderOpen className="size-4" />
                 Load Template
               </Button>
-              <Button variant="outline" className="w-full justify-start gap-2 text-sm">
-                <History className="h-4 w-4" />
+              <Button variant="outline" size="sm" className="w-full justify-start gap-2 text-sm">
+                <History className="size-4" />
                 View History
               </Button>
             </div>
@@ -681,15 +729,22 @@ export default function DashboardPage() {
 
               {/* Tab Selector */}
               {template && (
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden md:flex">
-                  <TabsList className="gap-1 bg-muted p-1">
-                    {Object.values(template.tabs).map(tab => (
-                      <TabsTrigger key={tab.id} value={tab.id} className="text-sm px-3">
-                        {tab.name}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </Tabs>
+                <div className="hidden md:flex items-center gap-1 bg-muted rounded-lg p-1">
+                  {Object.values(template.tabs).map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={cn(
+                        "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                        activeTab === tab.id
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {tab.name}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -745,91 +800,102 @@ export default function DashboardPage() {
           {/* Mobile Tab Selector */}
           {template && (
             <div className="md:hidden border-t px-2 py-2">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full gap-1 bg-muted p-1">
-                  {Object.values(template.tabs).map(tab => (
-                    <TabsTrigger key={tab.id} value={tab.id} className="text-xs py-2">
-                      {tab.name}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+              <div className="flex gap-1 overflow-x-auto bg-muted rounded-lg p-1">
+                {Object.values(template.tabs).map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      "px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors flex-shrink-0",
+                      activeTab === tab.id
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {tab.name}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </header>
 
         {/* Dashboard Grid */}
-        <div className="flex-1 overflow-auto p-4">
+        <div className="flex-1 min-h-0 overflow-auto p-4">
           {layout.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <LayoutDashboard className="h-12 w-12 mb-4 opacity-50" />
-              <p className="text-lg font-medium">No widgets in this tab</p>
-              <p className="text-sm">Select widgets from the left sidebar to add them to your dashboard</p>
-              <Button variant="outline" className="mt-4" onClick={() => setLeftSidebarOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
+            <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-muted-foreground">
+              <LayoutDashboard className="size-16 mb-4 opacity-30" />
+              <p className="text-xl font-semibold">No widgets in this tab</p>
+              <p className="text-sm mt-2 max-w-md text-center">
+                Select widgets from the left sidebar to add them to your dashboard, or check that the backend is running.
+              </p>
+              <Button variant="outline" className="mt-6" onClick={() => setLeftSidebarOpen(true)}>
+                <Plus className="size-4 mr-2" />
                 Browse Widgets
               </Button>
             </div>
           ) : (
-            <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(12, 1fr)" }}>
-              {layout.map(item => {
+            <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(12, minmax(0, 1fr))" }}>
+              {layout.map((item, idx) => {
                 const widget = widgets[item.i];
                 const state = widget ? widgetStates[item.i] : null;
-                
+                const itemKey = `${item.i}-${idx}`;
+
                 if (!widget || !state) {
                   return (
-                    <div
-                      key={item.i}
-                      className="border border-dashed border-destructive p-4"
+                    <Card
+                      key={itemKey}
+                      className="p-4 border-destructive/50"
                       style={{
-                        gridColumn: `span ${item.w / 3.33}`,
-                        gridRow: `span ${item.h / 5}`,
+                        gridColumn: `span ${Math.min(12, Math.max(1, Math.round(item.w / 100 * 12)))}`,
                       }}
                     >
-                      Widget not found: {item.i}
-                      <Button variant="outline" size="sm" className="mt-2" onClick={() => removeWidgetFromDashboard(item.i)}>
-                        Remove
-                      </Button>
-                    </div>
+                      <div className="flex flex-col gap-2">
+                        <p className="text-sm text-destructive">Widget not found: <code>{item.i}</code></p>
+                        <Button variant="destructive" size="sm" className="w-fit" onClick={() => removeWidgetFromDashboard(item.i)}>
+                          Remove
+                        </Button>
+                      </div>
+                    </Card>
                   );
                 }
 
+                const colSpan = Math.min(12, Math.max(1, Math.round(item.w / 100 * 12)));
+
                 return (
                   <Card
-                    key={item.i}
-                    className="flex flex-col overflow-hidden"
+                    key={itemKey}
+                    className="flex flex-col overflow-hidden min-h-[200px]"
                     style={{
-                      gridColumn: `span ${item.w / 3.33}`,
-                      gridRow: `span ${item.h / 5}`,
-                      minHeight: `${item.h * 20}px`,
+                      gridColumn: `span ${colSpan}`,
                     }}
                   >
-                    <CardHeader className="flex flex-row items-center justify-between p-3 pb-2">
-                      <CardTitle className="text-lg">{widget.name}</CardTitle>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-muted-foreground">{widget.category}</span>
+                    <CardHeader className="flex flex-row items-center justify-between px-4 py-3 pb-2">
+                      <CardTitle className="text-base font-semibold truncate">{widget.name}</CardTitle>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{widget.category}</Badge>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => refreshWidget(widget.endpoint)}
                           disabled={state.loading}
-                          className="h-7 w-7"
+                          className="size-7"
                         >
-                          <RefreshCw className={cn("h-4 w-4", state.loading && "animate-spin")} />
+                          <RefreshCw className={cn("size-4", state.loading && "animate-spin")} />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => removeWidgetFromDashboard(widget.endpoint)}
-                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          className="size-7 text-destructive hover:text-destructive"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="size-4" />
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="flex-1 flex flex-col p-3 pt-0">
+                    <CardContent className="flex-1 flex flex-col px-4 pb-4 pt-0 min-h-0">
                       {renderParamControls(widget, state)}
-                      <div className="flex-1 min-h-0">
+                      <div className="flex-1 min-h-0 mt-2 overflow-hidden">
                         {renderWidget(widget, state)}
                       </div>
                     </CardContent>
@@ -842,32 +908,27 @@ export default function DashboardPage() {
       </main>
 
       {/* Right Sidebar - AI Chat Assistant */}
-      <aside
-        className={cn(
-          "flex flex-col border-l bg-card transition-all duration-300",
-          rightSidebarOpen ? "w-96" : "w-0 overflow-hidden"
-        )}
-      >
-        {rightSidebarOpen && (
-          <div className="flex flex-col h-full">
-            <div className="flex h-16 items-center justify-between border-b p-4">
-              <div className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-semibold">AI Assistant</h2>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setRightSidebarOpen(false)}
-                className="h-8 w-8"
-                aria-label="Close chat"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+      {rightSidebarOpen && (
+        <aside className="flex flex-col border-l bg-card flex-shrink-0 w-96 h-full">
+          <div className="flex h-16 flex-shrink-0 items-center justify-between border-b px-4">
+            <div className="flex items-center gap-2">
+              <Bot className="size-5 text-primary" />
+              <h2 className="text-lg font-semibold">AI Assistant</h2>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setRightSidebarOpen(false)}
+              className="size-8"
+              aria-label="Close chat"
+            >
+              <X className="size-4" />
+            </Button>
+          </div>
 
-            {/* Chat Messages */}
-            <ScrollArea className="flex-1 p-4 space-y-4">
+          {/* Chat Messages - use native overflow instead of ScrollArea */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-4">
+            <div className="flex flex-col gap-4">
               {chatMessages.map(msg => (
                 <div
                   key={msg.id}
@@ -878,13 +939,13 @@ export default function DashboardPage() {
                 >
                   <div
                     className={cn(
-                      "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium",
+                      "flex-shrink-0 size-8 rounded-full flex items-center justify-center",
                       msg.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground"
                     )}
                   >
-                    {msg.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                    {msg.role === "user" ? <User className="size-4" /> : <Bot className="size-4" />}
                   </div>
                   <div
                     className={cn(
@@ -898,56 +959,152 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-end gap-2 mt-1 text-xs opacity-60">
                       <span>{msg.timestamp.toLocaleTimeString()}</span>
                       {msg.widgets && msg.widgets.length > 0 && (
-                        <span className="px-2 py-0.5 bg-primary/20 text-primary rounded text-xs">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                           {msg.widgets.join(", ")}
-                        </span>
+                        </Badge>
                       )}
                     </div>
                   </div>
                 </div>
               ))}
               <div ref={chatEndRef} />
-            </ScrollArea>
-
-            {/* Chat Input */}
-            <div className="border-t p-4">
-              <div className="flex items-end gap-2">
-                <div className="flex-1 relative">
-                  <Textarea
-                    value={chatInput}
-                    onChange={e => setChatInput(e.target.value)}
-                    onKeyDown={handleChatKeyDown}
-                    placeholder="Ask about stocks, market data, analysis..."
-                    className="min-h-[44px] max-h-32 pr-10 resize-none"
-                    rows={1}
-                    disabled={chatLoading}
-                  />
-                  <div className="absolute bottom-2 right-2 flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled>
-                      <Paperclip className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled>
-                      <Mic className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <Button
-                  onClick={sendChatMessage}
-                  disabled={!chatInput.trim() || chatLoading}
-                  className="h-10 w-10 rounded-full"
-                  aria-label="Send message"
-                >
-                  {chatLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-                </Button>
-              </div>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <kbd className="px-1.5 py-0.5 bg-muted rounded border">Enter</kbd> Send
-                <kbd className="px-1.5 py-0.5 bg-muted rounded border">Shift+Enter</kbd> New line
-              </div>
             </div>
           </div>
+
+          {/* Chat Input */}
+          <div className="flex-shrink-0 border-t p-4">
+            <div className="flex items-end gap-2">
+              <div className="flex-1 relative">
+                <Textarea
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={handleChatKeyDown}
+                  placeholder="Ask about stocks, market data..."
+                  className="min-h-[44px] max-h-32 pr-10 resize-none"
+                  rows={1}
+                  disabled={chatLoading}
+                />
+                <div className="absolute bottom-2 right-2 flex items-center gap-1">
+                  <Button variant="ghost" size="icon" className="size-7" disabled>
+                    <Paperclip className="size-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="size-7" disabled>
+                    <Mic className="size-4" />
+                  </Button>
+                </div>
+              </div>
+              <Button
+                onClick={sendChatMessage}
+                disabled={!chatInput.trim() || chatLoading}
+                className="size-10 rounded-full flex-shrink-0"
+                aria-label="Send message"
+              >
+                {chatLoading ? <Loader2 className="size-5 animate-spin" /> : <Send className="size-5" />}
+              </Button>
+            </div>
+            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+              <kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px]">Enter</kbd>
+              <span>Send</span>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px]">Shift+Enter</kbd>
+              <span>New line</span>
+            </div>
+          </div>
+        </aside>
+      )}
+    </div>
+  );
+}
+
+// Market Heatmap (Recharts Treemap)
+function StockHeatmap({ data }: { data: any }) {
+  const items: any[] = data?.data || [];
+  if (items.length === 0) {
+    return <div className="text-center text-muted-foreground py-8">No heatmap data</div>;
+  }
+
+  const sectors: Record<string, any[]> = {};
+  for (const item of items) {
+    const s = item.sector || "Other";
+    if (!sectors[s]) sectors[s] = [];
+    sectors[s].push(item);
+  }
+
+  const treemapData = Object.entries(sectors).map(([sector, stocks]) => ({
+    name: sector,
+    children: stocks.map(st => ({
+      name: st.symbol,
+      size: Math.max(st.marketCap || 1, 1000000),
+      symbol: st.symbol,
+      change: st.changePercent || 0,
+      price: st.price || 0,
+      companyName: st.name || st.symbol,
+    })),
+  }));
+
+  const changeColor = (pct: number) => {
+    if (pct >= 3) return "#0e9f6e";
+    if (pct >= 1) return "#22c55e";
+    if (pct >= 0) return "#86efac";
+    if (pct >= -1) return "#fca5a5";
+    if (pct >= -3) return "#ef4444";
+    return "#b91c1c";
+  };
+
+  const CustomContent = (props: any) => {
+    const { x, y, width, height, name, change, price, symbol } = props;
+    if (!width || !height || width < 30 || height < 20) return null;
+    const bg = changeColor(change || 0);
+    const textColor = change > 0 ? "#052e16" : change < 0 ? "#450a0a" : "#1f2937";
+
+    return (
+      <g>
+        <rect x={x} y={y} width={width} height={height} fill={bg} stroke="#fff" strokeWidth={1} rx={2} />
+        {width > 45 && height > 30 && (
+          <>
+            <text x={x + width / 2} y={y + height / 2 - 6} textAnchor="middle" fill={textColor} fontSize={width > 70 ? 13 : 10} fontWeight={700}>
+              {symbol}
+            </text>
+            <text x={x + width / 2} y={y + height / 2 + 8} textAnchor="middle" fill={textColor} fontSize={10} opacity={0.85}>
+              {change >= 0 ? "+" : ""}{change.toFixed(2)}%
+            </text>
+          </>
         )}
-      </aside>
+      </g>
+    );
+  };
+
+  const { Treemap, ResponsiveContainer, Tooltip } = require("recharts");
+
+  return (
+    <div className="w-full h-full min-h-[300px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <Treemap
+          data={treemapData}
+          dataKey="size"
+          aspectRatio={4 / 3}
+          stroke="#fff"
+          content={<CustomContent />}
+          isAnimationActive={false}
+        >
+          <Tooltip
+            content={({ active, payload }: any) => {
+              if (!active || !payload?.length) return null;
+              const d = payload[0]?.payload;
+              if (!d?.symbol) return null;
+              return (
+                <div className="bg-popover border rounded-lg p-2 text-xs shadow-md">
+                  <div className="font-bold">{d.symbol}</div>
+                  <div className="text-muted-foreground">{d.companyName}</div>
+                  <div>Price: ${d.price?.toFixed(2)}</div>
+                  <div className={d.change >= 0 ? "text-emerald-600" : "text-red-600"}>
+                    {d.change >= 0 ? "+" : ""}{d.change?.toFixed(2)}%
+                  </div>
+                </div>
+              );
+            }}
+          />
+        </Treemap>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -973,12 +1130,26 @@ function PlotlyChart({ data }: { data: any }) {
 }
 
 // Data table component
-function DataTable({ data, columns }: { data: any[]; columns: any[] }) {
-  if (!data || data.length === 0) {
+function DataTable({ data, columns }: { data: any; columns: any[] }) {
+  if (!data) {
     return <div className="text-center text-muted-foreground py-8">No data</div>;
   }
 
-  const cols = columns.length > 0 ? columns : Object.keys(data[0]).map(key => ({ field: key, headerName: key }));
+  // Normalize data to array
+  let rows: any[];
+  if (Array.isArray(data)) {
+    rows = data;
+  } else if (typeof data === 'object') {
+    rows = Object.values(data);
+  } else {
+    return <div className="text-center text-muted-foreground py-8">No data</div>;
+  }
+
+  if (rows.length === 0) {
+    return <div className="text-center text-muted-foreground py-8">No data</div>;
+  }
+
+  const cols = columns.length > 0 ? columns : Object.keys(rows[0]).map(key => ({ field: key, headerName: key }));
 
   return (
     <div className="overflow-x-auto">
@@ -993,42 +1164,48 @@ function DataTable({ data, columns }: { data: any[]; columns: any[] }) {
           </tr>
         </thead>
         <tbody>
-          {data.map((row, rowIdx) => (
-            <tr key={rowIdx} className="border-b hover:bg-muted/50">
-              {cols.map(col => {
-                const value = row[col.field];
-                let displayValue = value;
-                
-                if (col.renderFn === "link" && value) {
+          {rows.map((row, rowIdx) => {
+            const rowKey = row.id || row.symbol || row.name || rowIdx;
+            return (
+              <tr key={rowKey} className="border-b hover:bg-muted/50">
+                {cols.map(col => {
+                  const value = row[col.field];
+
+                  if (col.renderFn === "link" && value) {
+                    return (
+                      <td key={col.field} className="p-2">
+                        <a href={value} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                          Link
+                        </a>
+                      </td>
+                    );
+                  }
+
+                  if (col.renderFn === "percent" && typeof value === "number") {
+                    return (
+                      <td key={col.field} className="p-2">
+                        {`${(value * 100).toFixed(2)}%`}
+                      </td>
+                    );
+                  }
+
+                  if (col.renderFn === "greenRed" && typeof value === "number") {
+                    return (
+                      <td key={col.field} className={`p-2 ${value >= 0 ? "text-green-500" : "text-red-500"}`}>
+                        {value >= 0 ? "+" : ""}{value.toFixed(2)}
+                      </td>
+                    );
+                  }
+
                   return (
                     <td key={col.field} className="p-2">
-                      <a href={value} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                        Link
-                      </a>
+                      {value ?? "—"}
                     </td>
                   );
-                }
-                
-                if (col.renderFn === "percent" && typeof value === "number") {
-                  displayValue = `${(value * 100).toFixed(2)}%`;
-                }
-                
-                if (col.renderFn === "greenRed" && typeof value === "number") {
-                  return (
-                    <td key={col.field} className={`p-2 ${value >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      {value >= 0 ? "+" : ""}{value.toFixed(2)}
-                    </td>
-                  );
-                }
-                
-                return (
-                  <td key={col.field} className="p-2">
-                    {displayValue ?? "—"}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
+                })}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

@@ -39,7 +39,7 @@ class AgentChatResponse(BaseModel):
     data: dict[str, Any] | None = None
 
 
-FINANCIAL_SYSTEM_PROMPT = """You are Godel Terminal, an AI financial assistant with access to real-time market data, news, and analytics through the OpenBB Platform.
+FINANCIAL_SYSTEM_PROMPT = """You are OG Terminal, an AI financial assistant with access to real-time market data, news, and analytics through the OpenBB Platform.
 
 You can help users with:
 - Stock quotes, charts, and technical analysis
@@ -59,7 +59,7 @@ Available widgets you can reference:
 - news: latest_articles, semantic_search, sentiment_analysis, news_symbols
 - options: volatility_surface, option_chain, iv_term_structure, greeks_dashboard
 - portfolio: performance, allocation, correlation_matrix, risk_metrics
-- godel: AL, DES, FA, GR, ERN, INS, IMAPI, DVD
+- og: AL, DES, FA, GR, ERN, INS, IMAPI, DVD
 
 If a user's question maps to a widget, mention the widget endpoint they can add to their dashboard.""" 
 
