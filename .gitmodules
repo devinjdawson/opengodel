@@ -40,3 +40,6 @@
 [submodule ".reference/stock_market"]
 	path = .reference/stock_market
 	url = https://github.com/undefinedSahed/stock_market
+[submodule ".reference/openbb-marketaux"]
+	path = .reference/openbb-marketaux
+	url = https://github.com/devinjdawson/openbb-marketaux.git
