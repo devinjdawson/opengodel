@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 import pandas as pd
 import numpy as np
+import asyncio
+import functools
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 import plotly.graph_objects as go
@@ -15,6 +17,14 @@ router = APIRouter(prefix="/widgets/options", tags=["options widgets"])
 from openbb import obb
 
 
+async def _run_obb_sync(func, *args, **kwargs):
+    """Run synchronous OpenBB SDK call in thread pool."""
+    loop = asyncio.get_event_loop()
+    if kwargs:
+        return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
+    return await loop.run_in_executor(None, func, *args)
+
+
 async def _get_options_chain(
     symbol: str,
     expiration: str = "",
@@ -25,11 +35,11 @@ async def _get_options_chain(
         params = {"symbol": symbol, "provider": provider}
         if expiration:
             params["expiration"] = expiration
-        result = await obb.derivatives.options.chains(**params)
+        result = await _run_obb_sync(obb.derivatives.options.chains, **params)
         df = result.to_df()
         return df
     except Exception as e:
-        raise JSONResponse(content={"error": str(e)}, status_code=500)
+        return pd.DataFrame()
 
 
 async def _get_historical_price(
@@ -41,7 +51,7 @@ async def _get_historical_price(
 ) -> pd.DataFrame:
     """Fetch historical price data."""
     try:
-        result = await obb.equity.price.historical(
+        result = await _run_obb_sync(obb.equity.price.historical,
             symbol=symbol,
             start_date=start_date,
             end_date=end_date,
@@ -54,7 +64,7 @@ async def _get_historical_price(
             df["date"] = pd.to_datetime(df["date"])
         return df
     except Exception as e:
-        raise JSONResponse(content={"error": str(e)}, status_code=500)
+        return pd.DataFrame()
 
 
 @router.get("/volatility-surface")
@@ -103,7 +113,7 @@ async def get_volatility_surface(
     """Get implied volatility surface."""
     try:
         # Get options chains for multiple expirations
-        chains_result = await obb.derivatives.options.chains(symbol=symbol.upper(), provider=provider)
+        chains_result = await _run_obb_sync(obb.derivatives.options.chains,symbol=symbol.upper(), provider=provider)
         df = chains_result.to_df()
         
         if df.empty or "implied_volatility" not in df.columns:
@@ -120,7 +130,7 @@ async def get_volatility_surface(
             return JSONResponse(content={"error": "No valid IV data"}, status_code=404)
         
         # Get current price for moneyness
-        quote_result = await obb.equity.price.quote(symbol=symbol.upper(), provider="yfinance")
+        quote_result = await _run_obb_sync(obb.equity.price.quote,symbol=symbol.upper(), provider="yfinance")
         quote_df = quote_result.to_df()
         spot = quote_df.iloc[0].get("close", quote_df.iloc[0].get("last_price", 0)) if not quote_df.empty else 0
         
@@ -353,7 +363,7 @@ async def get_iv_term_structure(
     """Get ATM IV term structure."""
     try:
         # Get current price
-        quote_result = await obb.equity.price.quote(symbol=symbol.upper(), provider="yfinance")
+        quote_result = await _run_obb_sync(obb.equity.price.quote,symbol=symbol.upper(), provider="yfinance")
         quote_df = quote_result.to_df()
         spot = quote_df.iloc[0].get("close", quote_df.iloc[0].get("last_price", 0)) if not quote_df.empty else 0
         
@@ -361,7 +371,7 @@ async def get_iv_term_structure(
             return JSONResponse(content={"error": "Could not get spot price"}, status_code=404)
         
         # Get options chains
-        chains_result = await obb.derivatives.options.chains(symbol=symbol.upper(), provider=provider)
+        chains_result = await _run_obb_sync(obb.derivatives.options.chains,symbol=symbol.upper(), provider=provider)
         df = chains_result.to_df()
         
         if df.empty or "implied_volatility" not in df.columns:
@@ -524,7 +534,7 @@ async def get_greeks_dashboard(
         
         # If strike=0, find ATM
         if strike == 0:
-            quote_result = await obb.equity.price.quote(symbol=symbol.upper(), provider="yfinance")
+            quote_result = await _run_obb_sync(obb.equity.price.quote,symbol=symbol.upper(), provider="yfinance")
             quote_df = quote_result.to_df()
             spot = quote_df.iloc[0].get("close", quote_df.iloc[0].get("last_price", 0)) if not quote_df.empty else 0
             if spot > 0:

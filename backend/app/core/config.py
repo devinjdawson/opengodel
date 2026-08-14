@@ -31,6 +31,10 @@ class Settings(BaseSettings):
         default=None,
         description="OpenBB Personal Access Token",
     )
+    marketaux_api_key: str = Field(
+        default="",
+        description="Marketaux API key (loaded from OpenBB user_settings or .env)",
+    )
 
     # Inference (LLM) - for chat, reasoning, tool calling
     inference_provider: str = Field(
@@ -90,11 +94,11 @@ class Settings(BaseSettings):
     app_env: str = Field(default="development", description="Application environment")
     log_level: str = Field(default="INFO", description="Logging level")
     api_host: str = Field(default="0.0.0.0", description="API host")
-    api_port: int = Field(default=8000, description="API port")
+    api_port: int = Field(default=8001, description="API port")
 
     # Frontend
     next_public_api_url: str = Field(
-        default="http://127.0.0.1:8000",
+        default="http://127.0.0.1:8001",
         description="Frontend API URL",
     )
 

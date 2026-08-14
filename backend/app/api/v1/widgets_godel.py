@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Any, Optional
 import pandas as pd
+import asyncio
+import functools
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 import plotly.graph_objects as go
@@ -12,6 +14,14 @@ from app.core.widget_registry import register_widget, create_base_widget_config,
 router = APIRouter(prefix="/widgets/og", tags=["og terminal widgets"])
 
 from openbb import obb
+
+
+async def _run_obb_sync(func, *args, **kwargs):
+    """Run synchronous OpenBB SDK call in thread pool."""
+    loop = asyncio.get_event_loop()
+    if kwargs:
+        return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
+    return await loop.run_in_executor(None, func, *args)
 
 
 @router.get("/equity-search")
@@ -49,7 +59,7 @@ async def og_equity_search(
 ) -> Any:
     """OG AL command - equity search."""
     try:
-        result = await obb.equity.search(query=query, provider=provider)
+        result = await _run_obb_sync(obb.equity.search, query=query, provider=provider)
         df = result.to_df()
         
         if df.empty:
@@ -101,7 +111,7 @@ async def og_company_profile(
 ) -> Any:
     """OG DES command - company profile."""
     try:
-        result = await obb.equity.profile(symbol=symbol.upper(), provider=provider)
+        result = await _run_obb_sync(obb.equity.profile, symbol=symbol.upper(), provider=provider)
         df = result.to_df()
         
         if df.empty:
@@ -181,11 +191,11 @@ async def og_financial_statements(
     """OG FA command - financial statements."""
     try:
         if statement == "income":
-            result = await obb.equity.fundamental.income(symbol=symbol.upper(), period=period, provider=provider)
+            result = await _run_obb_sync(obb.equity.fundamental.income, symbol=symbol.upper(), period=period, provider=provider)
         elif statement == "balance":
-            result = await obb.equity.fundamental.balance(symbol=symbol.upper(), period=period, provider=provider)
+            result = await _run_obb_sync(obb.equity.fundamental.balance, symbol=symbol.upper(), period=period, provider=provider)
         elif statement == "cash":
-            result = await obb.equity.fundamental.cash(symbol=symbol.upper(), period=period, provider=provider)
+            result = await _run_obb_sync(obb.equity.fundamental.cash, symbol=symbol.upper(), period=period, provider=provider)
         else:
             return JSONResponse(content={"error": "Invalid statement type"}, status_code=400)
         
@@ -195,18 +205,24 @@ async def og_financial_statements(
             return JSONResponse(content={"error": "No data found"}, status_code=404)
         
         # Transpose for better display (dates as columns)
-        df_t = df.T.reset_index()
-        df_t.columns = ["metric"] + [str(c) for c in df.columns]
+        df_t = df.T.copy()
+        df_t = df_t.reset_index()
+        # Rename first column to "metric", keep rest as period names
+        first_col = df_t.columns[0]
+        df_t = df_t.rename(columns={first_col: "metric"})
         
         rows = df_t.to_dict("records")
         
         columns_defs = [{"field": "metric", "headerName": "Metric", "cellDataType": "text", "flex": 2}]
-        for col in df.columns:
+        for col in df_t.columns[1:]:
             columns_defs.append({"field": str(col), "headerName": str(col), "cellDataType": "text"})
         
         return WidgetResponse.table(rows, columns_defs=columns_defs)
     except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        import traceback
+        tb = traceback.format_exc()
+        print(f"ERROR in og_financial_statements: {e}\n{tb}")
+        return JSONResponse(content={"error": str(e), "traceback": tb}, status_code=500)
 
 
 @router.get("/key-stats")
@@ -244,7 +260,7 @@ async def og_key_stats(
 ) -> Any:
     """OG GR command - key statistics and ratios."""
     try:
-        result = await obb.equity.fundamental.metrics(symbol=symbol.upper(), provider=provider)
+        result = await _run_obb_sync(obb.equity.fundamental.metrics, symbol=symbol.upper(), provider=provider)
         df = result.to_df()
         
         if df.empty:
@@ -322,7 +338,7 @@ async def og_analyst_estimates(
 ) -> Any:
     """OG ERN command - analyst estimates."""
     try:
-        result = await obb.equity.estimates.forward_eps(symbol=symbol.upper(), provider=provider)
+        result = await _run_obb_sync(obb.equity.estimates.forward_eps, symbol=symbol.upper(), provider=provider)
         df = result.to_df()
         
         if df.empty:
@@ -384,7 +400,7 @@ async def og_insider_trading(
 ) -> Any:
     """OG INS command - insider trading."""
     try:
-        result = await obb.equity.ownership.insider_trading(symbol=symbol.upper(), provider=provider, limit=limit)
+        result = await _run_obb_sync(obb.equity.ownership.insider_trading, symbol=symbol.upper(), provider=provider, limit=limit)
         df = result.to_df()
         
         if df.empty:
@@ -440,7 +456,7 @@ async def og_institutional_ownership(
 ) -> Any:
     """OG IMAPI command - institutional ownership."""
     try:
-        result = await obb.equity.ownership.institutional(symbol=symbol.upper(), provider=provider)
+        result = await _run_obb_sync(obb.equity.ownership.institutional, symbol=symbol.upper(), provider=provider)
         df = result.to_df()
         
         if df.empty:
@@ -504,7 +520,7 @@ async def og_dividend_history(
 ) -> Any:
     """OG DVD command - dividend history."""
     try:
-        result = await obb.equity.fundamental.dividends(symbol=symbol.upper(), provider=provider)
+        result = await _run_obb_sync(obb.equity.fundamental.dividends, symbol=symbol.upper(), provider=provider)
         df = result.to_df()
         
         if df.empty:

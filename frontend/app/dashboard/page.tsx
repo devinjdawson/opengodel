@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, RefreshCw, Search, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, ChevronLeft, ChevronRight, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, TrendingUp } from "lucide-react";
+import { Loader2, RefreshCw, Search, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, ChevronLeft, ChevronRight, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, TrendingUp, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WidgetConfig {
@@ -70,6 +70,7 @@ const CATEGORIES = [
   { id: "news", name: "News", icon: MessageSquare },
   { id: "options", name: "Options", icon: PieChart },
   { id: "portfolio", name: "Portfolio", icon: Table },
+  { id: "sentiment", name: "Sentiment", icon: Heart },
   { id: "og", name: "OG Terminal", icon: Settings },
 ];
 
@@ -109,6 +110,43 @@ export default function DashboardPage() {
   useEffect(() => {
     loadWidgetsAndTemplates();
   }, []);
+
+  // Auto-fetch data for all widgets in the current tab
+  useEffect(() => {
+    if (loading) return;
+    const template = getTemplate();
+    if (!template) return;
+    const tab = template.tabs[activeTab];
+    if (!tab) return;
+
+    for (const item of tab.layout) {
+      if (widgetStates[item.i] && !widgetStates[item.i].data && !widgetStates[item.i].loading) {
+        fetchWidgetData(item.i);
+      }
+    }
+  }, [activeTemplate, activeTab, loading]);
+
+  const categoryToPath = (cat: string): string => {
+    const map: Record<string, string> = {
+      "OG Terminal": "og",
+      "og terminal": "og",
+      Equity: "equity",
+      equity: "equity",
+      Macro: "macro",
+      macro: "macro",
+      News: "news",
+      news: "news",
+      Options: "options",
+      options: "options",
+      Portfolio: "portfolio",
+      portfolio: "portfolio",
+      Market: "market",
+      market: "market",
+      Sentiment: "sentiment",
+      sentiment: "sentiment",
+    };
+    return map[cat] || cat.toLowerCase().replace(/\s+/g, "-");
+  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -204,27 +242,27 @@ export default function DashboardPage() {
     const state = widgetStates[endpoint];
     setWidgetStates(prev => ({
       ...prev,
-      [endpoint]: { ...state, loading: true, error: null },
+      [endpoint]: { ...prev[endpoint], loading: true, error: null },
     }));
 
     try {
-      // Build query params
       const params = new URLSearchParams();
-      for (const [key, value] of Object.entries(state.params)) {
+      for (const [key, value] of Object.entries(state?.params || {})) {
         params.append(key, String(value));
       }
 
-      const response = await fetch(`/api/v1/widgets/${widget.category.toLowerCase()}/${endpoint}?${params}`);
+      const categoryPath = categoryToPath(widget.category);
+      const response = await fetch(`/api/v1/widgets/${categoryPath}/${endpoint}?${params}`);
       const data = await response.json();
 
       setWidgetStates(prev => ({
         ...prev,
-        [endpoint]: { ...state, loading: false, data, error: null },
+        [endpoint]: { ...prev[endpoint], loading: false, data, error: null },
       }));
     } catch (error) {
       setWidgetStates(prev => ({
         ...prev,
-        [endpoint]: { ...state, loading: false, error: String(error) },
+        [endpoint]: { ...prev[endpoint], loading: false, error: String(error) },
       }));
     }
   };
@@ -302,7 +340,7 @@ export default function DashboardPage() {
 
     try {
       // Call the chat/agent endpoint
-      const response = await fetch(`/api/v1/agent/chat`, {
+      const response = await fetch(`/api/ai/agent/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: query, context: { symbol: globalParams.symbol } }),
@@ -435,16 +473,45 @@ export default function DashboardPage() {
       );
     }
 
+    if (!state.data) {
+      return (
+        <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+          No data available
+        </div>
+      );
+    }
+
+    const responseType = state.data?.type;
+
+    if (responseType === "error") {
+      return (
+        <div className="flex items-center justify-center h-[300px] text-destructive">
+          <div className="text-center">
+            <p>Error</p>
+            <p className="text-sm">{state.data.error}</p>
+            <Button size="sm" onClick={() => refreshWidget(widget.endpoint)} className="mt-2">
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Retry
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     if (widget.type === "chart" && state.data) {
-      return <PlotlyChart data={state.data} />;
+      const chartData = state.data.data?.chart?.data || state.data.data?.chart || state.data;
+      return <PlotlyChart data={chartData} />;
     }
 
     if (widget.type === "heatmap" && state.data) {
-      return <StockHeatmap data={state.data} />;
+      const heatmapData = state.data.data?.chart?.data || state.data.data?.chart || state.data;
+      return <StockHeatmap data={heatmapData} />;
     }
 
     if (widget.type === "table" && state.data) {
-      return <DataTable data={state.data} columns={widget.data?.table?.columnsDefs || []} />;
+      const tableData = state.data.data?.table?.data || state.data.data || state.data;
+      const columns = state.data.data?.table?.columnsDefs || widget.data?.table?.columnsDefs || [];
+      return <DataTable data={tableData} columns={columns} />;
     }
 
     return (
@@ -709,7 +776,7 @@ export default function DashboardPage() {
         <header className="border-b bg-card flex-shrink-0">
           <div className="flex h-16 items-center justify-between px-4">
             <div className="flex items-center gap-4">
-              <h1 className="text-xl font-bold">OpenBB Financial Dashboard</h1>
+              <h1 className="text-xl font-bold">OG Terminal</h1>
               
               {/* Template Selector */}
               <div className="w-48">

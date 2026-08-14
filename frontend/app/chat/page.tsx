@@ -467,16 +467,18 @@ export default function ChatPage() {
                   onOpenChange={setModelSelectorOpen}
                   open={modelSelectorOpen}
                 >
-                  <ModelSelectorTrigger>
-                    <PromptInputButton>
-                      {selectedModelData?.chefSlug && (
-                        <ModelSelectorLogo provider={selectedModelData.chefSlug} />
-                      )}
-                      {selectedModelData?.name && (
-                        <ModelSelectorName>{selectedModelData.name}</ModelSelectorName>
-                      )}
-                    </PromptInputButton>
-                  </ModelSelectorTrigger>
+                  <ModelSelectorTrigger
+                    render={
+                      <PromptInputButton>
+                        {selectedModelData?.chefSlug && (
+                          <ModelSelectorLogo provider={selectedModelData.chefSlug} />
+                        )}
+                        {selectedModelData?.name && (
+                          <ModelSelectorName>{selectedModelData.name}</ModelSelectorName>
+                        )}
+                      </PromptInputButton>
+                    }
+                  />
                   <ModelSelectorContent>
                     <ModelSelectorInput placeholder="Search models..." />
                     <ModelSelectorList>

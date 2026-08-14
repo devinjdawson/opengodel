@@ -5,7 +5,7 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 
-from app.api.v1 import equity, news, ai, widgets_equity, widgets_macro, widgets_news, widgets_options, widgets_portfolio, widgets_og, widgets_market
+from app.api.v1 import equity, news, ai, widgets_equity, widgets_macro, widgets_news, widgets_options, widgets_portfolio, widgets_godel, widgets_market, widgets_sentiment
 from app.core.config import settings
 from app.core.database import close_db, init_db
 from app.core.widget_registry import get_widgets, get_templates, set_templates, load_templates_from_file
@@ -22,6 +22,12 @@ async def lifespan(app: FastAPI):
     # Load templates
     templates = load_templates_from_file()
     set_templates(templates)
+
+    # Assign Marketaux API key to OpenBB credentials in-memory (for container support)
+    if settings.marketaux_api_key:
+        from openbb import obb
+        if not obb.user.credentials.marketaux_api_key:
+            obb.user.credentials.marketaux_api_key = settings.marketaux_api_key
 
     await start_scheduler()
 
@@ -58,8 +64,9 @@ app.include_router(widgets_macro.router)
 app.include_router(widgets_news.router)
 app.include_router(widgets_options.router)
 app.include_router(widgets_portfolio.router)
-app.include_router(widgets_og.router)
+app.include_router(widgets_godel.router)
 app.include_router(widgets_market.router)
+app.include_router(widgets_sentiment.router)
 
 
 @app.get("/health")

@@ -280,6 +280,58 @@
     "groups": []
   },
   {
+    "name": "Market Sentiment",
+    "img": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop",
+    "img_dark": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop",
+    "img_light": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop",
+    "description": "Market sentiment from Marketaux: per-symbol sentiment, breakdown, history, and trending entities",
+    "allowCustomization": true,
+    "tabs": {
+      "overview": {
+        "id": "overview",
+        "name": "Overview",
+        "layout": [
+          {
+            "i": "sentiment-summary",
+            "x": 0,
+            "y": 0,
+            "w": 100,
+            "h": 20
+          },
+          {
+            "i": "sentiment-breakdown",
+            "x": 0,
+            "y": 20,
+            "w": 50,
+            "h": 20
+          },
+          {
+            "i": "sentiment-history",
+            "x": 50,
+            "y": 20,
+            "w": 50,
+            "h": 25
+          },
+          {
+            "i": "sentiment-trending",
+            "x": 0,
+            "y": 45,
+            "w": 40,
+            "h": 25
+          },
+          {
+            "i": "marketaux-news-company",
+            "x": 40,
+            "y": 45,
+            "w": 60,
+            "h": 25
+          }
+        ]
+      }
+    },
+    "groups": []
+  },
+  {
     "name": "OG Terminal",
     "img": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=300&fit=crop",
     "img_dark": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=300&fit=crop",
