@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any, Optional
 import asyncio
+import functools
 import json
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
@@ -15,7 +16,9 @@ router = APIRouter(prefix="/widgets/market", tags=["market widgets"])
 async def _run_obb_sync(func, *args, **kwargs):
     """Run synchronous OpenBB call in thread pool."""
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, func, *args, **kwargs)
+    if kwargs:
+        return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
+    return await loop.run_in_executor(None, func, *args)
 
 
 SP500_TOP = [
@@ -26,14 +29,14 @@ SP500_TOP = [
 ]
 
 
-@router.get("/heatmap")
+@router.get("/market-heatmap")
 @register_widget(
     create_base_widget_config(
         name="Market Heatmap",
         description="S&P 500 top stocks heatmap by sector and % change",
         category="Market",
         endpoint="market-heatmap",
-        widget_type="chart",
+        widget_type="heatmap",
         grid_w=50,
         grid_h=30,
         params=[
@@ -109,28 +112,62 @@ async def market_heatmap(
                 profile_row = profile_row if not profile_row.empty else profile_df.iloc[[0]]
                 price_row = price_row if not price_row.empty else price_df.iloc[[0]]
 
-                sector_val = str(profile_row.iloc[0].get("sector", "Other")) if not profile_row.empty else "Other"
-                mktcap = float(profile_row.iloc[0].get("marketCap", 10000000000)) if not profile_row.empty else 10000000000
+                prof = profile_row.iloc[0] if not profile_row.empty else None
+                sector_val = str(prof.get("sector") or prof.get("industry_category") or "Other") if prof is not None else "Other"
+                if sector_val == "nan":
+                    sector_val = "Other"
+                raw_cap = prof.get("market_cap") or prof.get("marketCap") if prof is not None else None
+                mktcap = float(raw_cap) if raw_cap is not None else 10000000000.0
 
+                price_val: float | None = None
                 change_pct = 0.0
                 if not price_row.empty:
-                    cp = price_row.iloc[0].get("changePercent", None)
+                    row = price_row.iloc[0]
+                    price_val = row.get("last_price") or row.get("price") or row.get("lastPrice")
+                    if price_val is not None:
+                        price_val = round(float(price_val), 2)
+
+                    cp = row.get("changePercent") or row.get("change_percent")
                     if cp is not None:
                         change_pct = float(cp)
                     else:
-                        prev_close = price_row.iloc[0].get("previousClose") or price_row.iloc[0].get("previous_close")
-                        price = price_row.iloc[0].get("price", None)
-                        if price and prev_close:
-                            change_pct = (float(price) - float(prev_close)) / float(prev_close) * 100
+                        prev_close = row.get("prev_close") or row.get("previousClose") or row.get("previous_close")
+                        if price_val and prev_close:
+                            prev_close = float(prev_close)
+                            if prev_close > 0:
+                                change_pct = (price_val - prev_close) / prev_close * 100
+
+                def _safe_int(v) -> int:
+                    if v is None:
+                        return 0
+                    try:
+                        import math
+                        if math.isnan(float(v)):
+                            return 0
+                        return int(v)
+                    except (TypeError, ValueError):
+                        return 0
+
+                volume_val = _safe_int(price_row.iloc[0].get("volume") if not price_row.empty else None)
+                if mktcap == 10000000000.0:
+                    cap_val = price_row.iloc[0].get("marketCap") if not price_row.empty else None
+                    if cap_val is not None:
+                        try:
+                            mktcap = float(cap_val)
+                        except (TypeError, ValueError):
+                            pass
+
+                raw_name = prof.get("name", symbol) if prof is not None else symbol
+                name_val = str(raw_name) if str(raw_name) != "nan" else symbol
 
                 result.append({
                     "symbol": symbol,
-                    "name": str(profile_row.iloc[0].get("name", symbol)) if not profile_row.empty else symbol,
+                    "name": name_val,
                     "sector": sector_val,
                     "marketCap": mktcap,
                     "changePercent": round(change_pct, 2),
-                    "price": round(float(price_row.iloc[0].get("price", 0)), 2) if not price_row.empty else 0,
-                    "volume": int(price_row.iloc[0].get("volume", 0)) if not price_row.empty else 0,
+                    "price": price_val if price_val is not None else 0,
+                    "volume": volume_val,
                 })
             except Exception as item_err:
                 result.append({

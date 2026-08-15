@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, RefreshCw, Search, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, ChevronLeft, ChevronRight, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, TrendingUp, Heart } from "lucide-react";
+import { ResponsiveContainer, Treemap, Tooltip as RechartsTooltip } from "recharts";
 import { cn } from "@/lib/utils";
 
 interface WidgetConfig {
@@ -254,6 +255,15 @@ export default function DashboardPage() {
       const categoryPath = categoryToPath(widget.category);
       const response = await fetch(`/api/v1/widgets/${categoryPath}/${endpoint}?${params}`);
       const data = await response.json();
+
+      if (!response.ok) {
+        const errorMsg = data?.error || data?.detail || `HTTP ${response.status}`;
+        setWidgetStates(prev => ({
+          ...prev,
+          [endpoint]: { ...prev[endpoint], loading: false, data: null, error: errorMsg },
+        }));
+        return;
+      }
 
       setWidgetStates(prev => ({
         ...prev,
@@ -1118,10 +1128,27 @@ function StockHeatmap({ data }: { data: any }) {
   };
 
   const CustomContent = (props: any) => {
-    const { x, y, width, height, name, change, price, symbol } = props;
-    if (!width || !height || width < 30 || height < 20) return null;
-    const bg = changeColor(change || 0);
-    const textColor = change > 0 ? "#052e16" : change < 0 ? "#450a0a" : "#1f2937";
+    const { x, y, width, height, change, symbol } = props;
+    if (!width || !height) return null;
+
+    const pct = change ?? 0;
+
+    if (!symbol) {
+      return (
+        <g>
+          <rect x={x} y={y} width={width} height={height} fill="#1e293b" stroke="#334155" strokeWidth={1} rx={2} />
+          {width > 40 && height > 15 && (
+            <text x={x + 6} y={y + 14} fill="#94a3b8" fontSize={11} fontWeight={600}>
+              {props.name}
+            </text>
+          )}
+        </g>
+      );
+    }
+
+    if (width < 30 || height < 20) return null;
+    const bg = changeColor(pct);
+    const textColor = pct > 0 ? "#052e16" : pct < 0 ? "#450a0a" : "#1f2937";
 
     return (
       <g>
@@ -1132,7 +1159,7 @@ function StockHeatmap({ data }: { data: any }) {
               {symbol}
             </text>
             <text x={x + width / 2} y={y + height / 2 + 8} textAnchor="middle" fill={textColor} fontSize={10} opacity={0.85}>
-              {change >= 0 ? "+" : ""}{change.toFixed(2)}%
+              {pct >= 0 ? "+" : ""}{pct.toFixed(2)}%
             </text>
           </>
         )}
@@ -1140,20 +1167,18 @@ function StockHeatmap({ data }: { data: any }) {
     );
   };
 
-  const { Treemap, ResponsiveContainer, Tooltip } = require("recharts");
-
   return (
     <div className="w-full h-full min-h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
         <Treemap
           data={treemapData}
           dataKey="size"
-          aspectRatio={4 / 3}
+          ratio={4 / 3}
           stroke="#fff"
           content={<CustomContent />}
           isAnimationActive={false}
         >
-          <Tooltip
+          <RechartsTooltip
             content={({ active, payload }: any) => {
               if (!active || !payload?.length) return null;
               const d = payload[0]?.payload;
@@ -1164,7 +1189,7 @@ function StockHeatmap({ data }: { data: any }) {
                   <div className="text-muted-foreground">{d.companyName}</div>
                   <div>Price: ${d.price?.toFixed(2)}</div>
                   <div className={d.change >= 0 ? "text-emerald-600" : "text-red-600"}>
-                    {d.change >= 0 ? "+" : ""}{d.change?.toFixed(2)}%
+                    {d.change >= 0 ? "+" : ""}{(d.change ?? 0).toFixed(2)}%
                   </div>
                 </div>
               );
@@ -1232,7 +1257,7 @@ function DataTable({ data, columns }: { data: any; columns: any[] }) {
         </thead>
         <tbody>
           {rows.map((row, rowIdx) => {
-            const rowKey = row.id || row.symbol || row.name || rowIdx;
+            const rowKey = `${row.id || row.symbol || row.name || 'row'}-${rowIdx}`;
             return (
               <tr key={rowKey} className="border-b hover:bg-muted/50">
                 {cols.map(col => {

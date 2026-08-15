@@ -338,7 +338,12 @@ async def og_analyst_estimates(
 ) -> Any:
     """OG ERN command - analyst estimates."""
     try:
-        result = await _run_obb_sync(obb.equity.estimates.forward_eps, symbol=symbol.upper(), provider=provider)
+        result = await _run_obb_sync(
+            obb.equity.estimates.forward_eps,
+            symbol=symbol.upper(),
+            provider=provider,
+            limit=10,
+        )
         df = result.to_df()
         
         if df.empty:

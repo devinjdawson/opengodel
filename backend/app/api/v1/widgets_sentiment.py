@@ -42,7 +42,7 @@ def _published_after(days: int) -> str:
     return (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d")
 
 
-@router.get("/summary")
+@router.get("/sentiment-summary")
 @register_widget(
     create_base_widget_config(
         name="Sentiment Summary (Marketaux)",
@@ -134,7 +134,7 @@ async def sentiment_summary(
         return JSONResponse(content={"error": error_msg}, status_code=500)
 
 
-@router.get("/breakdown")
+@router.get("/sentiment-breakdown")
 @register_widget(
     create_base_widget_config(
         name="Sentiment Breakdown (Marketaux)",
@@ -263,7 +263,7 @@ async def sentiment_breakdown(
         return JSONResponse(content={"error": error_msg}, status_code=500)
 
 
-@router.get("/history")
+@router.get("/sentiment-history")
 @register_widget(
     create_base_widget_config(
         name="Sentiment History (Marketaux)",
@@ -381,7 +381,7 @@ async def sentiment_history(
         return JSONResponse(content={"error": error_msg}, status_code=500)
 
 
-@router.get("/trending")
+@router.get("/sentiment-trending")
 @register_widget(
     create_base_widget_config(
         name="Trending Entities (Marketaux)",
@@ -456,12 +456,12 @@ async def trending_entities(
         return JSONResponse(content={"error": error_msg}, status_code=500)
 
 
-@router.get("/news-market")
+@router.get("/marketaux-news-market")
 @register_widget(
     create_base_widget_config(
         name="Market News (Marketaux)",
         description="Latest market news with sentiment from Marketaux",
-        category="News",
+        category="Sentiment",
         endpoint="marketaux-news-market",
         widget_type="table",
         grid_w=60,
@@ -530,12 +530,12 @@ async def marketaux_news_market(
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
-@router.get("/news-company")
+@router.get("/marketaux-news-company")
 @register_widget(
     create_base_widget_config(
         name="Company News (Marketaux)",
         description="Company-specific news with sentiment from Marketaux",
-        category="News",
+        category="Sentiment",
         endpoint="marketaux-news-company",
         widget_type="table",
         grid_w=60,
