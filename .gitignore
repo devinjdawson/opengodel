@@ -5,3 +5,5 @@ node_modules
 data
 .uv
 .ruff_cache
+.playwright-mcp
+
