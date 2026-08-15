@@ -446,17 +446,36 @@ async def get_quote_summary(
     if not quote:
         return JSONResponse(content={"error": f"No quote found for {symbol}"}, status_code=404)
     
+    # Get profile for market_cap and pe_ratio
+    profile = None
+    try:
+        loop = asyncio.get_event_loop()
+        profile = await loop.run_in_executor(
+            None,
+            openbb_service.get_company_profile,
+            symbol.upper(),
+            "yfinance",
+        )
+    except Exception:
+        pass
+    
+    # Calculate change from last_price and prev_close
+    last_price = quote.get('last_price', 0) or 0
+    prev_close = quote.get('prev_close', 0) or 0
+    change = last_price - prev_close if prev_close else 0
+    change_percent = (change / prev_close * 100) if prev_close else 0
+    
     # Format key metrics
     metrics = [
-        {"metric": "Last Price", "value": f"${quote.get('close', quote.get('last_price', 0)):,.2f}"},
-        {"metric": "Change", "value": f"${quote.get('change', 0):,.2f}"},
-        {"metric": "Change %", "value": f"{quote.get('change_percent', 0):,.2f}%"},
+        {"metric": "Last Price", "value": f"${last_price:,.2f}"},
+        {"metric": "Change", "value": f"${change:,.2f}"},
+        {"metric": "Change %", "value": f"{change_percent:,.2f}%"},
         {"metric": "Volume", "value": f"{quote.get('volume', 0):,.0f}"},
-        {"metric": "Avg Volume", "value": f"{quote.get('avg_volume', 0):,.0f}"},
-        {"metric": "Market Cap", "value": f"${quote.get('market_cap', 0):,.0f}"},
-        {"metric": "P/E Ratio", "value": f"{quote.get('pe_ratio', 0):,.2f}"},
-        {"metric": "52W High", "value": f"${quote.get('high_52w', 0):,.2f}"},
-        {"metric": "52W Low", "value": f"${quote.get('low_52w', 0):,.2f}"},
+        {"metric": "Avg Volume", "value": f"{quote.get('volume_average', 0):,.0f}"},
+        {"metric": "Market Cap", "value": f"${(profile or {}).get('market_cap', 0):,.0f}" if profile else "N/A"},
+        {"metric": "P/E Ratio", "value": f"{(profile or {}).get('pe_ratio', 0):,.2f}" if profile and (profile or {}).get('pe_ratio') else "N/A"},
+        {"metric": "52W High", "value": f"${quote.get('year_high', 0):,.2f}"},
+        {"metric": "52W Low", "value": f"${quote.get('year_low', 0):,.2f}"},
         {"metric": "Open", "value": f"${quote.get('open', 0):,.2f}"},
         {"metric": "High", "value": f"${quote.get('high', 0):,.2f}"},
         {"metric": "Low", "value": f"${quote.get('low', 0):,.2f}"},

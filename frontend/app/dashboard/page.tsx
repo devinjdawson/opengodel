@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, RefreshCw, Search, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, ChevronLeft, ChevronRight, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, TrendingUp, Heart } from "lucide-react";
+import { Loader2, RefreshCw, Search, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, ChevronLeft, ChevronRight, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, TrendingUp, Heart, GripVertical, Pencil } from "lucide-react";
 import { ResponsiveContainer, Treemap, Tooltip as RechartsTooltip } from "recharts";
 import { cn } from "@/lib/utils";
+import { SwapyContainer, SwapySlot, SwapyItem, SwapyHandle } from "@/components/swapy-layout";
 
 interface WidgetConfig {
   id: string;
@@ -106,6 +107,49 @@ export default function DashboardPage() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Edit mode for drag-and-drop layout
+  const [editMode, setEditMode] = useState(false);
+  const [widgetOrder, setWidgetOrder] = useState<Record<string, string>>({});
+
+  // Default data provider
+  const [dataProvider, setDataProvider] = useState<string>("yfinance");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("defaultDataProvider");
+    if (saved) {
+      setDataProvider(saved);
+    }
+  }, []);
+
+  const handleProviderChange = async (provider: string) => {
+    setDataProvider(provider);
+    localStorage.setItem("defaultDataProvider", provider);
+    // Update backend setting
+    try {
+      await fetch(`/api/v1/widgets/og/settings/provider?provider=${provider}`, { method: "PUT" });
+    } catch (e) {
+      console.error("Failed to update provider:", e);
+    }
+  };
+
+  // Load widget order from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(`dashboard-order-${activeTemplate}-${activeTab}`);
+    if (saved) {
+      try {
+        setWidgetOrder(JSON.parse(saved));
+      } catch {
+        // Invalid JSON, use default order
+      }
+    }
+  }, [activeTemplate, activeTab]);
+
+  // Save widget order to localStorage
+  const saveWidgetOrder = (order: Record<string, string>) => {
+    setWidgetOrder(order);
+    localStorage.setItem(`dashboard-order-${activeTemplate}-${activeTab}`, JSON.stringify(order));
+  };
 
   // Load widgets and templates on mount
   useEffect(() => {
@@ -854,6 +898,28 @@ export default function DashboardPage() {
                   className="w-36"
                 />
               </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-muted-foreground">Provider:</label>
+                <Select value={dataProvider} onValueChange={handleProviderChange}>
+                  <SelectTrigger className="w-28 h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="yfinance">YFinance</SelectItem>
+                    <SelectItem value="fmp">FMP</SelectItem>
+                    <SelectItem value="polygon">Polygon</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                variant={editMode ? "default" : "outline"}
+                onClick={() => setEditMode(!editMode)}
+                className="gap-1"
+                title={editMode ? "Done rearranging" : "Rearrange widgets"}
+              >
+                <Pencil className="h-4 w-4" />
+                <span className="hidden sm:inline">{editMode ? "Done" : "Edit"}</span>
+              </Button>
               <Button
                 onClick={refreshAllWidgets}
                 disabled={layout.some(item => widgetStates[item.i]?.loading)}
@@ -912,74 +978,86 @@ export default function DashboardPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(12, minmax(0, 1fr))" }}>
+            <SwapyContainer
+              className="grid-cols-12"
+              onLayoutChange={saveWidgetOrder}
+              initialLayout={widgetOrder}
+              enabled={editMode}
+            >
               {layout.map((item, idx) => {
                 const widget = widgets[item.i];
                 const state = widget ? widgetStates[item.i] : null;
                 const itemKey = `${item.i}-${idx}`;
+                const slotId = `slot-${idx}`;
 
                 if (!widget || !state) {
                   return (
-                    <Card
-                      key={itemKey}
-                      className="p-4 border-destructive/50"
-                      style={{
-                        gridColumn: `span ${Math.min(12, Math.max(1, Math.round(item.w / 100 * 12)))}`,
-                      }}
-                    >
-                      <div className="flex flex-col gap-2">
-                        <p className="text-sm text-destructive">Widget not found: <code>{item.i}</code></p>
-                        <Button variant="destructive" size="sm" className="w-fit" onClick={() => removeWidgetFromDashboard(item.i)}>
-                          Remove
-                        </Button>
-                      </div>
-                    </Card>
+                    <SwapySlot key={itemKey} id={slotId} style={{ gridColumn: `span ${Math.min(12, Math.max(1, Math.round(item.w / 100 * 12)))}` }}>
+                      <SwapyItem id={item.i}>
+                        <Card
+                          className="p-4 border-destructive/50 relative group"
+                        >
+                          {editMode && <SwapyHandle />}
+                          <div className="flex flex-col gap-2">
+                            <p className="text-sm text-destructive">Widget not found: <code>{item.i}</code></p>
+                            <Button variant="destructive" size="sm" className="w-fit" onClick={() => removeWidgetFromDashboard(item.i)}>
+                              Remove
+                            </Button>
+                          </div>
+                        </Card>
+                      </SwapyItem>
+                    </SwapySlot>
                   );
                 }
 
                 const colSpan = Math.min(12, Math.max(1, Math.round(item.w / 100 * 12)));
 
                 return (
-                  <Card
-                    key={itemKey}
-                    className="flex flex-col overflow-hidden min-h-[200px]"
-                    style={{
-                      gridColumn: `span ${colSpan}`,
-                    }}
-                  >
-                    <CardHeader className="flex flex-row items-center justify-between px-4 py-3 pb-2">
-                      <CardTitle className="text-base font-semibold truncate">{widget.name}</CardTitle>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{widget.category}</Badge>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => refreshWidget(widget.endpoint)}
-                          disabled={state.loading}
-                          className="size-7"
-                        >
-                          <RefreshCw className={cn("size-4", state.loading && "animate-spin")} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeWidgetFromDashboard(widget.endpoint)}
-                          className="size-7 text-destructive hover:text-destructive"
-                        >
-                          <X className="size-4" />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex-1 flex flex-col px-4 pb-4 pt-0 min-h-0">
-                      {renderParamControls(widget, state)}
-                      <div className="flex-1 min-h-0 mt-2 overflow-hidden">
-                        {renderWidget(widget, state)}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <SwapySlot key={itemKey} id={slotId} style={{ gridColumn: `span ${colSpan}` }}>
+                    <SwapyItem id={item.i}>
+                      <Card
+                        className={cn(
+                          "flex flex-col overflow-hidden min-h-[200px] relative group",
+                          editMode && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background"
+                        )}
+                      >
+                        {editMode && <SwapyHandle />}
+                        <CardHeader className="flex flex-row items-center justify-between px-4 py-3 pb-2">
+                          <CardTitle className="text-base font-semibold truncate">{widget.name}</CardTitle>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">{widget.category}</Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => refreshWidget(widget.endpoint)}
+                              disabled={state.loading || editMode}
+                              className="size-7"
+                            >
+                              <RefreshCw className={cn("size-4", state.loading && "animate-spin")} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeWidgetFromDashboard(widget.endpoint)}
+                              disabled={editMode}
+                              className="size-7 text-destructive hover:text-destructive"
+                            >
+                              <X className="size-4" />
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="flex-1 flex flex-col px-4 pb-4 pt-0 min-h-0">
+                          {renderParamControls(widget, state)}
+                          <div className="flex-1 min-h-0 mt-2 overflow-hidden">
+                            {renderWidget(widget, state)}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </SwapyItem>
+                  </SwapySlot>
                 );
               })}
-            </div>
+            </SwapyContainer>
           )}
         </div>
       </main>
@@ -1130,23 +1208,10 @@ function StockHeatmap({ data }: { data: any }) {
   const CustomContent = (props: any) => {
     const { x, y, width, height, change, symbol } = props;
     if (!width || !height) return null;
-
-    const pct = change ?? 0;
-
-    if (!symbol) {
-      return (
-        <g>
-          <rect x={x} y={y} width={width} height={height} fill="#1e293b" stroke="#334155" strokeWidth={1} rx={2} />
-          {width > 40 && height > 15 && (
-            <text x={x + 6} y={y + 14} fill="#94a3b8" fontSize={11} fontWeight={600}>
-              {props.name}
-            </text>
-          )}
-        </g>
-      );
-    }
+    if (!symbol) return null;
 
     if (width < 30 || height < 20) return null;
+    const pct = change ?? 0;
     const bg = changeColor(pct);
     const textColor = pct > 0 ? "#052e16" : pct < 0 ? "#450a0a" : "#1f2937";
 
@@ -1167,36 +1232,50 @@ function StockHeatmap({ data }: { data: any }) {
     );
   };
 
+  const treemapHeight = treemapData.reduce((sum, s) => sum + (s.children?.length || 0), 0) * 80 + treemapData.length * 30;
+
   return (
-    <div className="w-full h-full min-h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <Treemap
-          data={treemapData}
-          dataKey="size"
-          ratio={4 / 3}
-          stroke="#fff"
-          content={<CustomContent />}
-          isAnimationActive={false}
-        >
-          <RechartsTooltip
-            content={({ active, payload }: any) => {
-              if (!active || !payload?.length) return null;
-              const d = payload[0]?.payload;
-              if (!d?.symbol) return null;
-              return (
-                <div className="bg-popover border rounded-lg p-2 text-xs shadow-md">
-                  <div className="font-bold">{d.symbol}</div>
-                  <div className="text-muted-foreground">{d.companyName}</div>
-                  <div>Price: ${d.price?.toFixed(2)}</div>
-                  <div className={d.change >= 0 ? "text-emerald-600" : "text-red-600"}>
-                    {d.change >= 0 ? "+" : ""}{(d.change ?? 0).toFixed(2)}%
+    <div className="w-full h-full min-h-[300px] flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs px-1">
+        {treemapData.map((s) => (
+          <span key={s.name} className="flex items-center gap-1.5">
+            <span className="font-semibold text-foreground">{s.name}</span>
+            <span className="text-muted-foreground">({s.children?.length || 0})</span>
+          </span>
+        ))}
+      </div>
+      <div className="flex-1 min-h-[300px]" style={{ height: treemapHeight }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <Treemap
+            data={treemapData}
+            dataKey="size"
+            ratio={4 / 3}
+            stroke="#fff"
+            content={<CustomContent />}
+            isAnimationActive={false}
+          >
+            <RechartsTooltip
+              content={({ active, payload }: any) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0]?.payload;
+                if (!d?.symbol) return null;
+                const sectorName = treemapData.find((s) => s.children?.some((c: any) => c.symbol === d.symbol))?.name;
+                return (
+                  <div className="bg-popover border rounded-lg p-2 text-xs shadow-md">
+                    <div className="font-bold">{d.symbol}</div>
+                    <div className="text-muted-foreground">{d.companyName}</div>
+                    {sectorName && <div className="text-muted-foreground/80">{sectorName}</div>}
+                    <div>Price: ${d.price?.toFixed(2)}</div>
+                    <div className={d.change >= 0 ? "text-emerald-600" : "text-red-600"}>
+                      {d.change >= 0 ? "+" : ""}{(d.change ?? 0).toFixed(2)}%
+                    </div>
                   </div>
-                </div>
-              );
-            }}
-          />
-        </Treemap>
-      </ResponsiveContainer>
+                );
+              }}
+            />
+          </Treemap>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

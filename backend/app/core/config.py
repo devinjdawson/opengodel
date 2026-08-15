@@ -35,6 +35,10 @@ class Settings(BaseSettings):
         default="",
         description="Marketaux API key (loaded from OpenBB user_settings or .env)",
     )
+    default_data_provider: str = Field(
+        default="yfinance",
+        description="Default data provider for widgets: yfinance, fmp, polygon, etc.",
+    )
 
     # Inference (LLM) - for chat, reasoning, tool calling
     inference_provider: str = Field(

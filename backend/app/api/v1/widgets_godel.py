@@ -3,6 +3,8 @@ from typing import Any, Optional
 import pandas as pd
 import asyncio
 import functools
+import hashlib
+import json
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 import plotly.graph_objects as go
@@ -16,12 +18,76 @@ router = APIRouter(prefix="/widgets/og", tags=["og terminal widgets"])
 from openbb import obb
 
 
-async def _run_obb_sync(func, *args, **kwargs):
-    """Run synchronous OpenBB SDK call in thread pool."""
+# Settings endpoint to get/set default provider
+@router.get("/settings")
+async def get_settings():
+    """Get current settings."""
+    return {
+        "default_data_provider": settings.default_data_provider,
+        "available_providers": ["yfinance", "fmp", "polygon", "sec"],
+    }
+
+
+@router.put("/settings/provider")
+async def set_default_provider(provider: str = Query(...)):
+    """Set the default data provider."""
+    settings.default_data_provider = provider
+    return {"default_data_provider": provider, "status": "updated"}
+
+
+# Simple in-memory cache with TTL
+_cache_store = {}
+_cache_timestamps = {}
+
+
+def _get_cache_key(func_name: str, args: tuple, kwargs: dict) -> str:
+    """Generate a cache key from function name and arguments."""
+    key_data = {
+        "func": func_name,
+        "args": str(args),
+        "kwargs": {k: v for k, v in sorted(kwargs.items())}
+    }
+    key_str = json.dumps(key_data, sort_keys=True)
+    return hashlib.md5(key_str.encode()).hexdigest()
+
+
+def _get_cached(key: str, ttl: int):
+    """Get value from cache if not expired."""
+    if key in _cache_store and key in _cache_timestamps:
+        if datetime.now() - _cache_timestamps[key] < timedelta(seconds=ttl):
+            return _cache_store[key]
+        else:
+            # Expired, remove from cache
+            del _cache_store[key]
+            del _cache_timestamps[key]
+    return None
+
+
+def _set_cached(key: str, value: Any):
+    """Set value in cache with current timestamp."""
+    _cache_store[key] = value
+    _cache_timestamps[key] = datetime.now()
+
+
+async def _run_obb_sync_cached(func, ttl: int = 3600, *args, **kwargs):
+    """Run synchronous OpenBB SDK call in thread pool with caching."""
+    cache_key = _get_cache_key(func.__name__, args, kwargs)
+    
+    # Check cache first
+    cached = _get_cached(cache_key, ttl)
+    if cached is not None:
+        return cached
+    
+    # Cache miss, call the function
     loop = asyncio.get_event_loop()
     if kwargs:
-        return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
-    return await loop.run_in_executor(None, func, *args)
+        result = await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
+    else:
+        result = await loop.run_in_executor(None, func, *args)
+    
+    # Cache the result
+    _set_cached(cache_key, result)
+    return result
 
 
 @router.get("/equity-search")
@@ -59,7 +125,7 @@ async def og_equity_search(
 ) -> Any:
     """OG AL command - equity search."""
     try:
-        result = await _run_obb_sync(obb.equity.search, query=query, provider=provider)
+        result = await _run_obb_sync_cached(obb.equity.search, 1800, query=query, provider=provider)
         df = result.to_df()
         
         if df.empty:
@@ -111,7 +177,7 @@ async def og_company_profile(
 ) -> Any:
     """OG DES command - company profile."""
     try:
-        result = await _run_obb_sync(obb.equity.profile, symbol=symbol.upper(), provider=provider)
+        result = await _run_obb_sync_cached(obb.equity.profile, 7200, symbol=symbol.upper(), provider=provider)
         df = result.to_df()
         
         if df.empty:
@@ -173,11 +239,11 @@ async def og_company_profile(
             },
             {
                 "paramName": "provider",
-                "value": "fmp",
+                "value": settings.default_data_provider,
                 "label": "Provider",
                 "show": True,
                 "type": "text",
-                "options": [{"label": "FMP", "value": "fmp"}, {"label": "YFinance", "value": "yfinance"}],
+                "options": [{"label": "YFinance", "value": "yfinance"}, {"label": "FMP", "value": "fmp"}],
             },
         ],
     )
@@ -186,16 +252,16 @@ async def og_financial_statements(
     symbol: str = Query("AAPL"),
     statement: str = Query("income"),
     period: str = Query("annual"),
-    provider: str = Query("fmp"),
+    provider: str = Query(default_factory=lambda: settings.default_data_provider),
 ) -> Any:
     """OG FA command - financial statements."""
     try:
         if statement == "income":
-            result = await _run_obb_sync(obb.equity.fundamental.income, symbol=symbol.upper(), period=period, provider=provider)
+            result = await _run_obb_sync_cached(obb.equity.fundamental.income, 3600, symbol=symbol.upper(), period=period, provider=provider)
         elif statement == "balance":
-            result = await _run_obb_sync(obb.equity.fundamental.balance, symbol=symbol.upper(), period=period, provider=provider)
+            result = await _run_obb_sync_cached(obb.equity.fundamental.balance, 3600, symbol=symbol.upper(), period=period, provider=provider)
         elif statement == "cash":
-            result = await _run_obb_sync(obb.equity.fundamental.cash, symbol=symbol.upper(), period=period, provider=provider)
+            result = await _run_obb_sync_cached(obb.equity.fundamental.cash, 3600, symbol=symbol.upper(), period=period, provider=provider)
         else:
             return JSONResponse(content={"error": "Invalid statement type"}, status_code=400)
         
@@ -222,7 +288,19 @@ async def og_financial_statements(
         import traceback
         tb = traceback.format_exc()
         print(f"ERROR in og_financial_statements: {e}\n{tb}")
-        return JSONResponse(content={"error": str(e), "traceback": tb}, status_code=500)
+        
+        # Provide user-friendly error messages
+        error_msg = str(e)
+        if "429" in error_msg or "Limit Reach" in error_msg:
+            friendly_error = "FMP API rate limit exceeded. Please try again later or switch to YFinance provider."
+        elif "401" in error_msg or "Unauthorized" in error_msg:
+            friendly_error = "FMP API authentication failed. Please check your API key."
+        elif "403" in error_msg:
+            friendly_error = "FMP API access denied. This endpoint may require a premium subscription."
+        else:
+            friendly_error = f"Failed to fetch financial data: {error_msg}"
+        
+        return JSONResponse(content={"error": friendly_error, "details": error_msg}, status_code=500)
 
 
 @router.get("/key-stats")
@@ -245,22 +323,22 @@ async def og_financial_statements(
             },
             {
                 "paramName": "provider",
-                "value": "fmp",
+                "value": settings.default_data_provider,
                 "label": "Provider",
                 "show": True,
                 "type": "text",
-                "options": [{"label": "FMP", "value": "fmp"}, {"label": "YFinance", "value": "yfinance"}],
+                "options": [{"label": "YFinance", "value": "yfinance"}, {"label": "FMP", "value": "fmp"}],
             },
         ],
     )
 )
 async def og_key_stats(
     symbol: str = Query("AAPL"),
-    provider: str = Query("fmp"),
+    provider: str = Query(default_factory=lambda: settings.default_data_provider),
 ) -> Any:
     """OG GR command - key statistics and ratios."""
     try:
-        result = await _run_obb_sync(obb.equity.fundamental.metrics, symbol=symbol.upper(), provider=provider)
+        result = await _run_obb_sync_cached(obb.equity.fundamental.metrics, 1800, symbol=symbol.upper(), provider=provider)
         df = result.to_df()
         
         if df.empty:
@@ -327,7 +405,7 @@ async def og_key_stats(
                 "label": "Provider",
                 "show": True,
                 "type": "text",
-                "options": [{"label": "FMP", "value": "fmp"}, {"label": "YFinance", "value": "yfinance"}],
+                "options": [{"label": "FMP", "value": "fmp"}, {"label": "Intrinio", "value": "intrinio"}, {"label": "Seeking Alpha", "value": "seeking_alpha"}],
             },
         ],
     )
@@ -338,8 +416,8 @@ async def og_analyst_estimates(
 ) -> Any:
     """OG ERN command - analyst estimates."""
     try:
-        result = await _run_obb_sync(
-            obb.equity.estimates.forward_eps,
+        result = await _run_obb_sync_cached(
+            obb.equity.estimates.forward_eps, 3600,
             symbol=symbol.upper(),
             provider=provider,
             limit=10,
@@ -359,7 +437,16 @@ async def og_analyst_estimates(
             {"field": "lastUpdated", "headerName": "Updated", "cellDataType": "text"},
         ])
     except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        error_msg = str(e)
+        if "429" in error_msg or "Limit Reach" in error_msg:
+            friendly_error = "FMP API rate limit exceeded. Please try again later or switch to a different provider."
+        elif "401" in error_msg or "Unauthorized" in error_msg:
+            friendly_error = "FMP API authentication failed. Please check your API key."
+        elif "403" in error_msg:
+            friendly_error = "FMP API access denied. This endpoint may require a premium subscription."
+        else:
+            friendly_error = f"Failed to fetch analyst estimates: {error_msg}"
+        return JSONResponse(content={"error": friendly_error, "details": error_msg}, status_code=500)
 
 
 @router.get("/insider-trading")
@@ -389,11 +476,11 @@ async def og_analyst_estimates(
             },
             {
                 "paramName": "provider",
-                "value": "fmp",
+                "value": "sec",
                 "label": "Provider",
                 "show": True,
                 "type": "text",
-                "options": [{"label": "FMP", "value": "fmp"}, {"label": "SEC", "value": "sec"}],
+                "options": [{"label": "SEC", "value": "sec"}, {"label": "FMP", "value": "fmp"}, {"label": "Intrinio", "value": "intrinio"}],
             },
         ],
     )
@@ -401,11 +488,11 @@ async def og_analyst_estimates(
 async def og_insider_trading(
     symbol: str = Query("AAPL"),
     limit: int = Query(50),
-    provider: str = Query("fmp"),
+    provider: str = Query("sec"),
 ) -> Any:
     """OG INS command - insider trading."""
     try:
-        result = await _run_obb_sync(obb.equity.ownership.insider_trading, symbol=symbol.upper(), provider=provider, limit=limit)
+        result = await _run_obb_sync_cached(obb.equity.ownership.insider_trading, 3600, symbol=symbol.upper(), provider=provider, limit=limit)
         df = result.to_df()
         
         if df.empty:
@@ -461,7 +548,7 @@ async def og_institutional_ownership(
 ) -> Any:
     """OG IMAPI command - institutional ownership."""
     try:
-        result = await _run_obb_sync(obb.equity.ownership.institutional, symbol=symbol.upper(), provider=provider)
+        result = await _run_obb_sync_cached(obb.equity.ownership.institutional, 3600, symbol=symbol.upper(), provider=provider)
         df = result.to_df()
         
         if df.empty:
@@ -501,11 +588,11 @@ async def og_institutional_ownership(
             },
             {
                 "paramName": "provider",
-                "value": "fmp",
+                "value": settings.default_data_provider,
                 "label": "Provider",
                 "show": True,
                 "type": "text",
-                "options": [{"label": "FMP", "value": "fmp"}, {"label": "YFinance", "value": "yfinance"}],
+                "options": [{"label": "YFinance", "value": "yfinance"}, {"label": "FMP", "value": "fmp"}],
             },
             {
                 "paramName": "theme",
@@ -520,12 +607,12 @@ async def og_institutional_ownership(
 )
 async def og_dividend_history(
     symbol: str = Query("AAPL"),
-    provider: str = Query("fmp"),
+    provider: str = Query(default_factory=lambda: settings.default_data_provider),
     theme: str = Query("dark"),
 ) -> Any:
     """OG DVD command - dividend history."""
     try:
-        result = await _run_obb_sync(obb.equity.fundamental.dividends, symbol=symbol.upper(), provider=provider)
+        result = await _run_obb_sync_cached(obb.equity.fundamental.dividends, 3600, symbol=symbol.upper(), provider=provider)
         df = result.to_df()
         
         if df.empty:
