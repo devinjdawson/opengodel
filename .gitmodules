@@ -43,3 +43,6 @@
 [submodule ".reference/openbb-marketaux"]
 	path = .reference/openbb-marketaux
 	url = https://github.com/devinjdawson/openbb-marketaux.git
+[submodule ".reference/dnd-dashboard"]
+	path = .reference/dnd-dashboard
+	url = https://github.com/olliethedev/dnd-dashboard.git
