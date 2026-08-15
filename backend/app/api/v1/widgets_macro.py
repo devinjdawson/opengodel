@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import Any, Optional, List
 import pandas as pd
 import asyncio
+import functools
 import json
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
@@ -17,7 +18,9 @@ router = APIRouter(prefix="/widgets/macro", tags=["macro widgets"])
 async def _run_obb_sync(func, *args, **kwargs):
     """Run synchronous OpenBB call in thread pool."""
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, func, *args, **kwargs)
+    if kwargs:
+        return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
+    return await loop.run_in_executor(None, func, *args)
 
 
 async def _get_fred_series(series_id: str, start_date: str, end_date: str) -> pd.DataFrame:
@@ -376,39 +379,55 @@ async def get_fed_balance_sheet(
             obb.economy.central_bank_holdings,
             provider="federal_reserve",
             start_date=start_date,
-            holding_type="all_treasury",
-            monthly=True,
+            summary=True,
         )
         df = result.to_df()
         
         if df.empty:
             return JSONResponse(content={"error": "No Fed balance sheet data"}, status_code=404)
         
+        df = df.reset_index()
+        
+        for col in df.columns:
+            if col != "date" and pd.api.types.is_numeric_dtype(df[col]):
+                df[col] = df[col] / 1e9
+        
         fig = go.Figure()
         
-        if view == "net_liquidity":
-            # Net liquidity = WALCL - RRP - TGA
-            if "WALCL" in df.columns and "RRP" in df.columns and "TGA" in df.columns:
-                df["net_liquidity"] = df["WALCL"] - df["RRP"] - df["TGA"]
-                fig.add_trace(go.Scatter(
-                    x=df["date"], y=df["net_liquidity"], mode="lines",
-                    name="Net Liquidity", line=dict(color="#26a69a", width=2),
-                ))
-                fig.add_trace(go.Scatter(
-                    x=df["date"], y=df["WALCL"], mode="lines",
-                    name="WALCL (Assets)", line=dict(color="#2962ff", width=1, dash="dash"),
-                ))
-                fig.add_trace(go.Scatter(
-                    x=df["date"], y=df["RRP"] + df["TGA"], mode="lines",
-                    name="RRP + TGA (Liabilities)", line=dict(color="#ef5350", width=1, dash="dash"),
-                ))
+        stacked_cols = [c for c in ["bills", "notes_and_bonds", "tips", "mbs", "cmbs", "agencies", "frn"] if c in df.columns]
+        color_map = {
+            "bills": "#2962ff",
+            "notes_and_bonds": "#26a69a",
+            "tips": "#ff6d00",
+            "mbs": "#ab47bc",
+            "cmbs": "#ec407a",
+            "agencies": "#78909c",
+            "frn": "#ffd600",
+        }
+        name_map = {
+            "bills": "Bills",
+            "notes_and_bonds": "Notes & Bonds",
+            "tips": "TIPS",
+            "mbs": "MBS",
+            "cmbs": "CMBS",
+            "agencies": "Agencies",
+            "frn": "FRN",
+            "total": "Total",
+        }
+        
+        if view == "total" and "total" in df.columns:
+            fig.add_trace(go.Scatter(
+                x=df["date"], y=df["total"], mode="lines",
+                name="Total Holdings", line=dict(color="#2962ff", width=2),
+                fill="tozeroy", fillcolor="rgba(41,98,255,0.15)",
+            ))
         else:
-            # Stacked area chart
-            numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
-            for col in numeric_cols:
+            for col in stacked_cols:
                 fig.add_trace(go.Scatter(
                     x=df["date"], y=df[col], mode="lines",
-                    name=col, stackgroup="one",
+                    name=name_map.get(col, col),
+                    stackgroup="one",
+                    line=dict(color=color_map.get(col, "#cccccc"), width=0.5),
                 ))
         
         is_dark = theme == "dark"
