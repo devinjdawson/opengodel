@@ -558,7 +558,7 @@ export default function DashboardPage() {
     }
 
     if (widget.type === "heatmap" && state.data) {
-      const heatmapData = state.data.data?.chart?.data || state.data.data?.chart || state.data;
+      const heatmapData = state.data.data?.length ? state.data : state.data.data?.chart?.data || state.data.data?.chart || state.data;
       return <StockHeatmap data={heatmapData} />;
     }
 
@@ -1206,12 +1206,17 @@ function StockHeatmap({ data }: { data: any }) {
   };
 
   const CustomContent = (props: any) => {
-    const { x, y, width, height, change, symbol } = props;
+    const { x, y, width, height, payload } = props;
     if (!width || !height) return null;
+    
+    // Extract data from payload
+    const symbol = payload?.symbol || payload?.name;
+    const change = payload?.change ?? 0;
+    
     if (!symbol) return null;
-
     if (width < 30 || height < 20) return null;
-    const pct = change ?? 0;
+    
+    const pct = change;
     const bg = changeColor(pct);
     const textColor = pct > 0 ? "#052e16" : pct < 0 ? "#450a0a" : "#1f2937";
 
