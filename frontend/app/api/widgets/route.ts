@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch("http://localhost:8001/widgets.json", {
+    const res = await fetch("http://localhost:8000/widgets.json", {
       signal: controller.signal,
       cache: "no-store",
     });

@@ -8,27 +8,27 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/ai/:path*',
-        destination: 'http://localhost:8001/ai/:path*',
+        destination: 'http://localhost:8000/ai/:path*',
       },
       {
         source: '/ai/:path*',
-        destination: 'http://localhost:8001/ai/:path*',
+        destination: 'http://localhost:8000/ai/:path*',
       },
       {
         source: '/api/v1/widgets/:path*',
-        destination: 'http://localhost:8001/widgets/:path*',
+        destination: 'http://localhost:8000/widgets/:path*',
       },
       {
         source: '/api/v1/:path*',
-        destination: 'http://localhost:8001/api/v1/:path*',
+        destination: 'http://localhost:8000/api/v1/:path*',
       },
       {
         source: '/widgets.json',
-        destination: 'http://localhost:8001/widgets.json',
+        destination: 'http://localhost:8000/widgets.json',
       },
       {
         source: '/templates.json',
-        destination: 'http://localhost:8001/templates.json',
+        destination: 'http://localhost:8000/templates.json',
       },
     ]
   },

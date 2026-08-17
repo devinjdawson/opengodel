@@ -1302,21 +1302,24 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
     "Other": "#6b7280",
   };
 
-  const treemapData: TreemapDataPoint[] = [
-    {
-      name: "Market",
-      children: processedItems.map(st => ({
-        name: st.symbol,
-        size: Math.max(st.marketCap || 1, 1000000),
-        symbol: st.symbol,
-        change: st.changePercent || 0,
-        changeAbsolute: st.changeAbsolute || 0,
-        price: st.price || 0,
-        companyName: st.name || st.symbol,
-        sector: st.sector || "Other",
-      })),
-    },
-  ];
+  const validItems = processedItems.filter(st => st.marketCap && st.marketCap > 0);
+  const maxCap = validItems.length ? Math.max(...validItems.map(st => st.marketCap as number)) : 1;
+  const minCap = validItems.length ? Math.min(...validItems.map(st => st.marketCap as number)) : 1;
+
+  const treemapData: TreemapDataPoint[] = validItems.map(st => {
+    const cap = st.marketCap as number;
+    const normalized = Math.log10(cap / minCap) / Math.log10(maxCap / minCap);
+    return {
+      name: st.symbol,
+      size: 1 + normalized * 99,
+      symbol: st.symbol,
+      change: st.changePercent || 0,
+      changeAbsolute: st.changeAbsolute || 0,
+      price: st.price || 0,
+      companyName: st.name || st.symbol,
+      sector: st.sector || "Other",
+    };
+  });
 
   const changeColor = (pct: number): string => {
     if (pct >= 3) return "#0e9f6e";
@@ -1330,6 +1333,9 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
   const sectorColor = (sector: string): string => {
     return sectorColors[sector] || "#6b7280";
   };
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const CustomContent = (props: TreemapContentProps) => {
     const { x, y, width, height, symbol, name, change, changeAbsolute, price, companyName, sector } = props;
@@ -1538,10 +1544,8 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
             data={treemapData}
             dataKey="size"
             nameKey="name"
-            aspectRatio={2.5}
-            stroke="#fff"
             content={CustomContent}
-            isAnimationActive={animate}
+            isAnimationActive={mounted && animate}
           >
             <RechartsTooltip
               content={({ active, payload }: any) => {
