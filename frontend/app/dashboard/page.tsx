@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,7 +122,8 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const handleProviderChange = async (provider: string) => {
+  const handleProviderChange = async (provider: string | null) => {
+    if (!provider) return;
     setDataProvider(provider);
     localStorage.setItem("defaultDataProvider", provider);
     // Update backend setting
@@ -329,6 +330,8 @@ export default function DashboardPage() {
         params: { ...prev[endpoint].params, [paramName]: value },
       },
     }));
+    // Trigger data refresh with new params
+    fetchWidgetData(endpoint);
   };
 
   const handleGlobalParamChange = (key: string, value: string) => {
@@ -559,7 +562,7 @@ export default function DashboardPage() {
 
     if (widget.type === "heatmap" && state.data) {
       const heatmapData = state.data.data?.length ? state.data : state.data.data?.chart?.data || state.data.data?.chart || state.data;
-      return <StockHeatmap data={heatmapData} />;
+      return <StockHeatmap data={heatmapData} widgetEndpoint={widget.endpoint} widgetParams={state.params} onParamChange={(param, value) => updateWidgetParam(widget.endpoint, param, value)} />;
     }
 
     if (widget.type === "table" && state.data) {
@@ -1046,9 +1049,9 @@ export default function DashboardPage() {
                             </Button>
                           </div>
                         </CardHeader>
-                        <CardContent className="flex-1 flex flex-col px-4 pb-4 pt-0 min-h-0">
+                        <CardContent className="flex-1 flex flex-col px-4 pb-4 pt-0 min-h-0 min-w-0">
                           {renderParamControls(widget, state)}
-                          <div className="flex-1 min-h-0 mt-2 overflow-hidden">
+                          <div className="flex-1 min-h-0 min-w-0 mt-2 overflow-hidden">
                             {renderWidget(widget, state)}
                           </div>
                         </CardContent>
@@ -1171,32 +1174,133 @@ export default function DashboardPage() {
 }
 
 // Market Heatmap (Recharts Treemap)
-function StockHeatmap({ data }: { data: any }) {
-  const items: any[] = data?.data || [];
-  if (items.length === 0) {
-    return <div className="text-center text-muted-foreground py-8">No heatmap data</div>;
-  }
+interface HeatmapItem {
+  symbol: string;
+  name: string;
+  sector: string;
+  marketCap: number | null;
+  changePercent: number;
+  changeAbsolute: number;
+  price: number | null;
+  volume: number;
+}
 
-  const sectors: Record<string, any[]> = {};
-  for (const item of items) {
+interface TreemapDataPoint {
+  name: string;
+  children?: TreemapDataPoint[];
+  size?: number;
+  symbol?: string;
+  change?: number;
+  changeAbsolute?: number;
+  price?: number;
+  companyName?: string;
+  [key: string]: unknown;
+}
+
+interface TreemapContentProps {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  symbol?: string;
+  name?: string;
+  change?: number;
+  changeAbsolute?: number;
+  price?: number;
+  companyName?: string;
+  [key: string]: unknown;
+}
+
+interface StockHeatmapProps {
+  data: { data: HeatmapItem[] };
+  widgetEndpoint: string;
+  widgetParams: Record<string, any>;
+  onParamChange: (param: string, value: any) => void;
+}
+
+function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: StockHeatmapProps) {
+  const items: HeatmapItem[] = data?.data || [];
+  const [sortBy, setSortBy] = useState(widgetParams.sortBy || "pctChange");
+  const [sortOrder, setSortOrder] = useState(widgetParams.sortOrder || "desc");
+  const [selectedSectors, setSelectedSectors] = useState<string[]>(widgetParams.sectors ? widgetParams.sectors.split(",").filter(Boolean) : []);
+  const [animate, setAnimate] = useState(widgetParams.animate !== false);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  const allSectors = useMemo(() => {
+    const sectors = new Set(items.map(i => i.sector).filter(Boolean));
+    return Array.from(sectors).sort();
+  }, [items]);
+
+  // Sort and filter items
+  const processedItems = useMemo(() => {
+    let result = [...items];
+
+    // Sector filter
+    if (selectedSectors.length > 0) {
+      result = result.filter(item => selectedSectors.includes(item.sector));
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      let aVal: number | string = 0;
+      let bVal: number | string = 0;
+
+      switch (sortBy) {
+        case "pctChange":
+          aVal = a.changePercent;
+          bVal = b.changePercent;
+          break;
+        case "absChange":
+          aVal = a.changeAbsolute;
+          bVal = b.changeAbsolute;
+          break;
+        case "marketCap":
+          aVal = a.marketCap || 0;
+          bVal = b.marketCap || 0;
+          break;
+        case "volume":
+          aVal = a.volume;
+          bVal = b.volume;
+          break;
+        case "symbol":
+          aVal = a.symbol;
+          bVal = b.symbol;
+          break;
+      }
+
+      if (typeof aVal === "string") {
+        return sortOrder === "asc"
+          ? (aVal as string).localeCompare(bVal as string)
+          : (bVal as string).localeCompare(aVal as string);
+      }
+      return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+    });
+
+    return result;
+  }, [items, sortBy, sortOrder, selectedSectors]);
+
+  const sectors: Record<string, HeatmapItem[]> = {};
+  for (const item of processedItems) {
     const s = item.sector || "Other";
     if (!sectors[s]) sectors[s] = [];
     sectors[s].push(item);
   }
 
-  const treemapData = Object.entries(sectors).map(([sector, stocks]) => ({
+  const treemapData: TreemapDataPoint[] = Object.entries(sectors).map(([sector, stocks]) => ({
     name: sector,
     children: stocks.map(st => ({
       name: st.symbol,
       size: Math.max(st.marketCap || 1, 1000000),
       symbol: st.symbol,
       change: st.changePercent || 0,
+      changeAbsolute: st.changeAbsolute || 0,
       price: st.price || 0,
       companyName: st.name || st.symbol,
     })),
   }));
 
-  const changeColor = (pct: number) => {
+  const changeColor = (pct: number): string => {
     if (pct >= 3) return "#0e9f6e";
     if (pct >= 1) return "#22c55e";
     if (pct >= 0) return "#86efac";
@@ -1205,18 +1309,23 @@ function StockHeatmap({ data }: { data: any }) {
     return "#b91c1c";
   };
 
-  const CustomContent = (props: any) => {
-    const { x, y, width, height, payload } = props;
-    if (!width || !height) return null;
-    
-    // Extract data from payload
-    const symbol = payload?.symbol || payload?.name;
-    const change = payload?.change ?? 0;
-    
-    if (!symbol) return null;
-    if (width < 30 || height < 20) return null;
-    
-    const pct = change;
+  const CustomContent = (props: TreemapContentProps) => {
+    const { x, y, width, height, symbol, name, change, changeAbsolute, price, companyName } = props;
+    if (!width || !height) {
+      return <g />;
+    }
+
+    const sym = symbol || name;
+    const chg = change ?? 0;
+
+    if (!sym) {
+      return <g />;
+    }
+    if (width < 30 || height < 20) {
+      return <g />;
+    }
+
+    const pct = chg;
     const bg = changeColor(pct);
     const textColor = pct > 0 ? "#052e16" : pct < 0 ? "#450a0a" : "#1f2937";
 
@@ -1226,7 +1335,7 @@ function StockHeatmap({ data }: { data: any }) {
         {width > 45 && height > 30 && (
           <>
             <text x={x + width / 2} y={y + height / 2 - 6} textAnchor="middle" fill={textColor} fontSize={width > 70 ? 13 : 10} fontWeight={700}>
-              {symbol}
+              {sym}
             </text>
             <text x={x + width / 2} y={y + height / 2 + 8} textAnchor="middle" fill={textColor} fontSize={10} opacity={0.85}>
               {pct >= 0 ? "+" : ""}{pct.toFixed(2)}%
@@ -1237,40 +1346,190 @@ function StockHeatmap({ data }: { data: any }) {
     );
   };
 
-  const treemapHeight = treemapData.reduce((sum, s) => sum + (s.children?.length || 0), 0) * 80 + treemapData.length * 30;
+  const treemapHeight = Math.max(400, treemapData.reduce((sum, s) => sum + (s.children?.length || 0), 0) * 80 + treemapData.length * 30);
+
+  // Handle sort change
+  const handleSortChange = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortOrder("desc");
+    }
+  };
+
+  // Toggle sector
+  const toggleSector = (sector: string) => {
+    setSelectedSectors(prev =>
+      prev.includes(sector)
+        ? prev.filter(s => s !== sector)
+        : [...prev, sector]
+    );
+  };
+
+  // Check if US market is open (9:30 AM - 4:00 PM ET, Mon-Fri)
+  const isMarketOpen = useMemo(() => {
+    const now = new Date();
+    const etTime = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+    const day = etTime.getDay();
+    const hour = etTime.getHours();
+    const minute = etTime.getMinutes();
+    const totalMinutes = hour * 60 + minute;
+    return day >= 1 && day <= 5 && totalMinutes >= 9 * 60 + 30 && totalMinutes <= 16 * 60;
+  }, []);
+
+  // Auto-refresh effect
+  useEffect(() => {
+    if (!autoRefresh || !isMarketOpen) return;
+    
+    const interval = setInterval(() => {
+      // Trigger refresh by updating a dummy param or calling refresh
+      onParamChange("_refresh", Date.now());
+    }, 15000); // 15 seconds
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, isMarketOpen, onParamChange]);
+
+  // Update lastUpdate when data changes
+  useEffect(() => {
+    if (data?.data) {
+      setLastUpdate(new Date());
+    }
+  }, [data]);
 
   return (
-    <div className="w-full h-full min-h-[300px] flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs px-1">
+    <div className="w-full min-h-[400px] flex flex-col gap-2">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-2 text-xs px-1">
+        <div className="flex items-center gap-1">
+          <label className="text-muted-foreground">Sort:</label>
+          <Select value={sortBy} onValueChange={handleSortChange}>
+            <SelectTrigger className="w-28 h-7">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pctChange">% Change</SelectItem>
+              <SelectItem value="absChange">Abs Change ($)</SelectItem>
+              <SelectItem value="marketCap">Market Cap</SelectItem>
+              <SelectItem value="volume">Volume</SelectItem>
+              <SelectItem value="symbol">Symbol</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 p-0"
+            onClick={() => handleSortChange(sortBy)}
+            title="Toggle sort order"
+          >
+            {sortOrder === "desc" ? (
+              <TrendingUp className="size-4 rotate-180" />
+            ) : (
+              <TrendingUp className="size-4" />
+            )}
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <label className="text-muted-foreground">Sectors:</label>
+          <Select
+            value={selectedSectors.length === 0 ? "all" : selectedSectors.join(",")}
+            onValueChange={v => {
+              if (v === "all") {
+                setSelectedSectors([]);
+              }
+            }}
+          >
+            <SelectTrigger className="w-36 h-7">
+              <SelectValue placeholder="All sectors" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sectors</SelectItem>
+              {allSectors.map(sector => (
+                <SelectItem key={sector} value={sector}>
+                  {sector}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={animate}
+              onChange={e => setAnimate(e.target.checked)}
+              className="rounded border-input h-3 w-3"
+            />
+            <span className="text-muted-foreground">Animate</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={e => setAutoRefresh(e.target.checked)}
+              className="rounded border-input h-3 w-3"
+              disabled={!isMarketOpen}
+            />
+            <span className={cn("text-muted-foreground", !isMarketOpen && "opacity-50")}>
+              Auto-refresh (15s)
+            </span>
+            {!isMarketOpen && (
+              <Badge variant="secondary" className="text-[9px] ml-1">Market Closed</Badge>
+            )}
+          </label>
+        </div>
+
+        {lastUpdate && (
+          <span className="text-muted-foreground ml-auto">
+            Updated: {lastUpdate.toLocaleTimeString()}
+          </span>
+        )}
+      </div>
+
+      {/* Sector Legend */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs px-1">
         {treemapData.map((s) => (
-          <span key={s.name} className="flex items-center gap-1.5">
+          <label key={s.name} className="flex items-center gap-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selectedSectors.length === 0 || selectedSectors.includes(s.name)}
+              onChange={e => toggleSector(s.name)}
+              className="rounded border-input h-3 w-3"
+            />
             <span className="font-semibold text-foreground">{s.name}</span>
             <span className="text-muted-foreground">({s.children?.length || 0})</span>
-          </span>
+          </label>
         ))}
       </div>
-      <div className="flex-1 min-h-[300px]" style={{ height: treemapHeight }}>
+
+      {/* Treemap */}
+      <div style={{ width: "100%", maxWidth: "100%", height: treemapHeight, overflow: "hidden", contain: "layout" }}>
         <ResponsiveContainer width="100%" height="100%">
           <Treemap
             data={treemapData}
             dataKey="size"
-            ratio={4 / 3}
+            nameKey="name"
+            aspectRatio={4 / 3}
             stroke="#fff"
-            content={<CustomContent />}
-            isAnimationActive={false}
+            strokeWidth={1}
+            content={CustomContent}
+            isAnimationActive={animate}
           >
             <RechartsTooltip
               content={({ active, payload }: any) => {
                 if (!active || !payload?.length) return null;
                 const d = payload[0]?.payload;
                 if (!d?.symbol) return null;
-                const sectorName = treemapData.find((s) => s.children?.some((c: any) => c.symbol === d.symbol))?.name;
+                const sectorName = treemapData.find((sec) => sec.children?.some((c: any) => c.symbol === d.symbol))?.name;
                 return (
                   <div className="bg-popover border rounded-lg p-2 text-xs shadow-md">
                     <div className="font-bold">{d.symbol}</div>
                     <div className="text-muted-foreground">{d.companyName}</div>
                     {sectorName && <div className="text-muted-foreground/80">{sectorName}</div>}
                     <div>Price: ${d.price?.toFixed(2)}</div>
+                    <div>Abs Change: ${d.changeAbsolute?.toFixed(2)}</div>
                     <div className={d.change >= 0 ? "text-emerald-600" : "text-red-600"}>
                       {d.change >= 0 ? "+" : ""}{(d.change ?? 0).toFixed(2)}%
                     </div>
