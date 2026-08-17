@@ -1220,8 +1220,8 @@ interface StockHeatmapProps {
 
 function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: StockHeatmapProps) {
   const items: HeatmapItem[] = data?.data || [];
-  const [sortBy, setSortBy] = useState(widgetParams.sortBy || "pctChange");
-  const [sortOrder, setSortOrder] = useState(widgetParams.sortOrder || "desc");
+  const [sortBy, setSortBy] = useState<string>(widgetParams.sortBy || "pctChange");
+  const [sortOrder, setSortOrder] = useState<string>(widgetParams.sortOrder || "desc");
   const [selectedSectors, setSelectedSectors] = useState<string[]>(widgetParams.sectors ? widgetParams.sectors.split(",").filter(Boolean) : []);
   const [animate, setAnimate] = useState(widgetParams.animate !== false);
   const [autoRefresh, setAutoRefresh] = useState(false);
@@ -1274,7 +1274,7 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
           ? (aVal as string).localeCompare(bVal as string)
           : (bVal as string).localeCompare(aVal as string);
       }
-      return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+      return sortOrder === "asc" ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
     });
 
     return result;
@@ -1287,18 +1287,36 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
     sectors[s].push(item);
   }
 
-  const treemapData: TreemapDataPoint[] = Object.entries(sectors).map(([sector, stocks]) => ({
-    name: sector,
-    children: stocks.map(st => ({
-      name: st.symbol,
-      size: Math.max(st.marketCap || 1, 1000000),
-      symbol: st.symbol,
-      change: st.changePercent || 0,
-      changeAbsolute: st.changeAbsolute || 0,
-      price: st.price || 0,
-      companyName: st.name || st.symbol,
-    })),
-  }));
+  const sectorColors: Record<string, string> = {
+    "Technology": "#3b82f6",
+    "Healthcare": "#10b981",
+    "Financial Services": "#f59e0b",
+    "Consumer Cyclical": "#8b5cf6",
+    "Communication Services": "#ec4899",
+    "Energy": "#ef4444",
+    "Industrials": "#6366f1",
+    "Consumer Defensive": "#14b8a6",
+    "Basic Materials": "#f97316",
+    "Real Estate": "#84cc16",
+    "Utilities": "#06b6d4",
+    "Other": "#6b7280",
+  };
+
+  const treemapData: TreemapDataPoint[] = [
+    {
+      name: "Market",
+      children: processedItems.map(st => ({
+        name: st.symbol,
+        size: Math.max(st.marketCap || 1, 1000000),
+        symbol: st.symbol,
+        change: st.changePercent || 0,
+        changeAbsolute: st.changeAbsolute || 0,
+        price: st.price || 0,
+        companyName: st.name || st.symbol,
+        sector: st.sector || "Other",
+      })),
+    },
+  ];
 
   const changeColor = (pct: number): string => {
     if (pct >= 3) return "#0e9f6e";
@@ -1309,8 +1327,12 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
     return "#b91c1c";
   };
 
+  const sectorColor = (sector: string): string => {
+    return sectorColors[sector] || "#6b7280";
+  };
+
   const CustomContent = (props: TreemapContentProps) => {
-    const { x, y, width, height, symbol, name, change, changeAbsolute, price, companyName } = props;
+    const { x, y, width, height, symbol, name, change, changeAbsolute, price, companyName, sector } = props;
     if (!width || !height) {
       return <g />;
     }
@@ -1321,20 +1343,21 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
     if (!sym) {
       return <g />;
     }
-    if (width < 30 || height < 20) {
+    if (width < 35 || height < 25) {
       return <g />;
     }
 
     const pct = chg;
     const bg = changeColor(pct);
+    const borderColor = sectorColor((sector as string) || "");
     const textColor = pct > 0 ? "#052e16" : pct < 0 ? "#450a0a" : "#1f2937";
 
     return (
       <g>
-        <rect x={x} y={y} width={width} height={height} fill={bg} stroke="#fff" strokeWidth={1} rx={2} />
-        {width > 45 && height > 30 && (
+        <rect x={x} y={y} width={width} height={height} fill={bg} stroke={borderColor} strokeWidth={2} rx={2} />
+        {width > 50 && height > 35 && (
           <>
-            <text x={x + width / 2} y={y + height / 2 - 6} textAnchor="middle" fill={textColor} fontSize={width > 70 ? 13 : 10} fontWeight={700}>
+            <text x={x + width / 2} y={y + height / 2 - 6} textAnchor="middle" fill={textColor} fontSize={width > 80 ? 13 : 10} fontWeight={700}>
               {sym}
             </text>
             <text x={x + width / 2} y={y + height / 2 + 8} textAnchor="middle" fill={textColor} fontSize={10} opacity={0.85}>
@@ -1346,7 +1369,7 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
     );
   };
 
-  const treemapHeight = Math.max(400, treemapData.reduce((sum, s) => sum + (s.children?.length || 0), 0) * 80 + treemapData.length * 30);
+  const treemapHeight = 520;
 
   // Handle sort change
   const handleSortChange = (field: string) => {
@@ -1403,7 +1426,7 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
       <div className="flex flex-wrap items-center gap-2 text-xs px-1">
         <div className="flex items-center gap-1">
           <label className="text-muted-foreground">Sort:</label>
-          <Select value={sortBy} onValueChange={handleSortChange}>
+          <Select value={sortBy} onValueChange={v => v && handleSortChange(v)}>
             <SelectTrigger className="w-28 h-7">
               <SelectValue />
             </SelectTrigger>
@@ -1490,30 +1513,33 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
 
       {/* Sector Legend */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs px-1">
-        {treemapData.map((s) => (
-          <label key={s.name} className="flex items-center gap-1.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={selectedSectors.length === 0 || selectedSectors.includes(s.name)}
-              onChange={e => toggleSector(s.name)}
-              className="rounded border-input h-3 w-3"
-            />
-            <span className="font-semibold text-foreground">{s.name}</span>
-            <span className="text-muted-foreground">({s.children?.length || 0})</span>
-          </label>
-        ))}
+        {allSectors.map((sector) => {
+          const count = processedItems.filter(i => i.sector === sector).length;
+          return (
+            <label key={sector} className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedSectors.length === 0 || selectedSectors.includes(sector)}
+                onChange={e => toggleSector(sector)}
+                className="rounded border-input h-3 w-3"
+              />
+              <span className="font-semibold text-foreground">{sector}</span>
+              <span className="text-muted-foreground">({count})</span>
+              <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: sectorColor(sector) }} />
+            </label>
+          );
+        })}
       </div>
 
       {/* Treemap */}
-      <div style={{ width: "100%", maxWidth: "100%", height: treemapHeight, overflow: "hidden", contain: "layout" }}>
+      <div className="w-full" style={{ maxWidth: "100%", height: treemapHeight, overflow: "hidden" }}>
         <ResponsiveContainer width="100%" height="100%">
           <Treemap
             data={treemapData}
             dataKey="size"
             nameKey="name"
-            aspectRatio={4 / 3}
+            aspectRatio={2.5}
             stroke="#fff"
-            strokeWidth={1}
             content={CustomContent}
             isAnimationActive={animate}
           >
@@ -1522,12 +1548,11 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
                 if (!active || !payload?.length) return null;
                 const d = payload[0]?.payload;
                 if (!d?.symbol) return null;
-                const sectorName = treemapData.find((sec) => sec.children?.some((c: any) => c.symbol === d.symbol))?.name;
                 return (
                   <div className="bg-popover border rounded-lg p-2 text-xs shadow-md">
                     <div className="font-bold">{d.symbol}</div>
                     <div className="text-muted-foreground">{d.companyName}</div>
-                    {sectorName && <div className="text-muted-foreground/80">{sectorName}</div>}
+                    {d.sector && <div className="text-muted-foreground/80">{d.sector}</div>}
                     <div>Price: ${d.price?.toFixed(2)}</div>
                     <div>Abs Change: ${d.changeAbsolute?.toFixed(2)}</div>
                     <div className={d.change >= 0 ? "text-emerald-600" : "text-red-600"}>
