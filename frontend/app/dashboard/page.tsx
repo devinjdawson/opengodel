@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, RefreshCw, Search, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, ChevronLeft, ChevronRight, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, TrendingUp, Heart, GripVertical, Pencil } from "lucide-react";
-import { ResponsiveContainer, Treemap, Tooltip as RechartsTooltip } from "recharts";
+import { motion, LayoutGroup } from "motion/react";
 import { cn } from "@/lib/utils";
 import { SwapyContainer, SwapySlot, SwapyItem, SwapyHandle } from "@/components/swapy-layout";
 
@@ -1218,6 +1218,80 @@ interface StockHeatmapProps {
   onParamChange: (param: string, value: any) => void;
 }
 
+interface LayoutNode {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  data: TreemapDataPoint;
+}
+
+function worstAspectRatio(rowValues: number[], shortSide: number): number {
+  if (rowValues.length === 0 || shortSide <= 0) return Infinity;
+  const rowSum = rowValues.reduce((a, b) => a + b, 0);
+  if (rowSum <= 0) return Infinity;
+  const rowLength = rowSum / shortSide;
+  let worst = 0;
+  for (const v of rowValues) {
+    const itemLongSide = (v / rowSum) * rowLength;
+    const ratio = Math.max(shortSide / itemLongSide, itemLongSide / shortSide);
+    worst = Math.max(worst, ratio);
+  }
+  return worst;
+}
+
+function squarify(data: TreemapDataPoint[], x: number, y: number, width: number, height: number): LayoutNode[] {
+  if (!data.length || width <= 0 || height <= 0) return [];
+  const totalValue = data.reduce((sum, d) => sum + (d.size || 1), 0);
+  if (totalValue <= 0) return [];
+  const results: LayoutNode[] = [];
+  let remaining = [...data];
+  let cx = x, cy = y, cw = width, ch = height;
+  while (remaining.length > 0) {
+    const isHorizontal = cw >= ch;
+    const shortSide = isHorizontal ? ch : cw;
+    const remainingTotal = remaining.reduce((sum, d) => sum + (d.size || 1), 0);
+    const row: TreemapDataPoint[] = [];
+    let rowSum = 0;
+    let currentWorst = worstAspectRatio([], shortSide);
+    for (let i = 0; i < remaining.length; i++) {
+      const newRow = [...row, remaining[i]];
+      const newRowSum = rowSum + (remaining[i].size || 1);
+      const newWorst = worstAspectRatio(newRow.map(d => d.size || 1), shortSide);
+      if (newWorst <= currentWorst) {
+        row.push(remaining[i]);
+        rowSum = newRowSum;
+        currentWorst = newWorst;
+      } else {
+        break;
+      }
+    }
+    const remainingArea = cw * ch;
+    const rowArea = (rowSum / remainingTotal) * remainingArea;
+    const rowLength = isHorizontal ? cw : ch;
+    const rowThickness = rowArea / rowLength;
+    let offset = 0;
+    for (const item of row) {
+      const itemLength = ((item.size || 1) / rowSum) * rowLength;
+      if (isHorizontal) {
+        results.push({ x: cx + offset, y: cy, width: itemLength, height: rowThickness, data: item });
+      } else {
+        results.push({ x: cx, y: cy + offset, width: rowThickness, height: itemLength, data: item });
+      }
+      offset += itemLength;
+    }
+    remaining = remaining.slice(row.length);
+    if (isHorizontal) {
+      cy += rowThickness;
+      ch -= rowThickness;
+    } else {
+      cx += rowThickness;
+      cw -= rowThickness;
+    }
+  }
+  return results;
+}
+
 function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: StockHeatmapProps) {
   const items: HeatmapItem[] = data?.data || [];
   const [sortBy, setSortBy] = useState<string>(widgetParams.sortBy || "pctChange");
@@ -1227,25 +1301,32 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect.width;
+      if (w && w > 0) setContainerWidth(w);
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   const allSectors = useMemo(() => {
     const sectors = new Set(items.map(i => i.sector).filter(Boolean));
     return Array.from(sectors).sort();
   }, [items]);
 
-  // Sort and filter items
   const processedItems = useMemo(() => {
     let result = [...items];
-
-    // Sector filter
     if (selectedSectors.length > 0) {
       result = result.filter(item => selectedSectors.includes(item.sector));
     }
-
-    // Sort
     result.sort((a, b) => {
       let aVal: number | string = 0;
       let bVal: number | string = 0;
-
       switch (sortBy) {
         case "pctChange":
           aVal = a.changePercent;
@@ -1268,7 +1349,6 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
           bVal = b.symbol;
           break;
       }
-
       if (typeof aVal === "string") {
         return sortOrder === "asc"
           ? (aVal as string).localeCompare(bVal as string)
@@ -1276,7 +1356,6 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
       }
       return sortOrder === "asc" ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
     });
-
     return result;
   }, [items, sortBy, sortOrder, selectedSectors]);
 
@@ -1334,50 +1413,13 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
     return sectorColors[sector] || "#6b7280";
   };
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const layoutNodes = useMemo(() => {
+    if (!containerWidth || !treemapData.length) return [];
+    return squarify(treemapData, 0, 0, containerWidth, 520);
+  }, [treemapData, containerWidth]);
 
-  const CustomContent = (props: TreemapContentProps) => {
-    const { x, y, width, height, symbol, name, change, changeAbsolute, price, companyName, sector } = props;
-    if (!width || !height) {
-      return <g />;
-    }
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; data: TreemapDataPoint } | null>(null);
 
-    const sym = symbol || name;
-    const chg = change ?? 0;
-
-    if (!sym) {
-      return <g />;
-    }
-    if (width < 35 || height < 25) {
-      return <g />;
-    }
-
-    const pct = chg;
-    const bg = changeColor(pct);
-    const borderColor = sectorColor((sector as string) || "");
-    const textColor = pct > 0 ? "#052e16" : pct < 0 ? "#450a0a" : "#1f2937";
-
-    return (
-      <g>
-        <rect x={x} y={y} width={width} height={height} fill={bg} stroke={borderColor} strokeWidth={2} rx={2} />
-        {width > 50 && height > 35 && (
-          <>
-            <text x={x + width / 2} y={y + height / 2 - 6} textAnchor="middle" fill={textColor} fontSize={width > 80 ? 13 : 10} fontWeight={700}>
-              {sym}
-            </text>
-            <text x={x + width / 2} y={y + height / 2 + 8} textAnchor="middle" fill={textColor} fontSize={10} opacity={0.85}>
-              {pct >= 0 ? "+" : ""}{pct.toFixed(2)}%
-            </text>
-          </>
-        )}
-      </g>
-    );
-  };
-
-  const treemapHeight = 520;
-
-  // Handle sort change
   const handleSortChange = (field: string) => {
     if (sortBy === field) {
       setSortOrder(prev => prev === "asc" ? "desc" : "asc");
@@ -1387,7 +1429,6 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
     }
   };
 
-  // Toggle sector
   const toggleSector = (sector: string) => {
     setSelectedSectors(prev =>
       prev.includes(sector)
@@ -1396,7 +1437,6 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
     );
   };
 
-  // Check if US market is open (9:30 AM - 4:00 PM ET, Mon-Fri)
   const isMarketOpen = useMemo(() => {
     const now = new Date();
     const etTime = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
@@ -1407,19 +1447,14 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
     return day >= 1 && day <= 5 && totalMinutes >= 9 * 60 + 30 && totalMinutes <= 16 * 60;
   }, []);
 
-  // Auto-refresh effect
   useEffect(() => {
     if (!autoRefresh || !isMarketOpen) return;
-    
     const interval = setInterval(() => {
-      // Trigger refresh by updating a dummy param or calling refresh
       onParamChange("_refresh", Date.now());
-    }, 15000); // 15 seconds
-
+    }, 15000);
     return () => clearInterval(interval);
   }, [autoRefresh, isMarketOpen, onParamChange]);
 
-  // Update lastUpdate when data changes
   useEffect(() => {
     if (data?.data) {
       setLastUpdate(new Date());
@@ -1538,36 +1573,97 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
       </div>
 
       {/* Treemap */}
-      <div className="w-full" style={{ maxWidth: "100%", height: treemapHeight, overflow: "hidden" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <Treemap
-            data={treemapData}
-            dataKey="size"
-            nameKey="name"
-            content={CustomContent}
-            isAnimationActive={mounted && animate}
-          >
-            <RechartsTooltip
-              content={({ active, payload }: any) => {
-                if (!active || !payload?.length) return null;
-                const d = payload[0]?.payload;
-                if (!d?.symbol) return null;
+      <div ref={containerRef} className="w-full" style={{ height: 520, overflow: "hidden", position: "relative" }}>
+        {containerWidth === 0 ? (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+            Loading heatmap...
+          </div>
+        ) : (
+          <svg width={containerWidth} height={520} style={{ display: "block" }}>
+            <LayoutGroup>
+              {layoutNodes.map((node) => {
+                const pct = node.data.change || 0;
+                const textColor = pct > 0 ? "#052e16" : pct < 0 ? "#450a0a" : "#1f2937";
                 return (
-                  <div className="bg-popover border rounded-lg p-2 text-xs shadow-md">
-                    <div className="font-bold">{d.symbol}</div>
-                    <div className="text-muted-foreground">{d.companyName}</div>
-                    {d.sector && <div className="text-muted-foreground/80">{d.sector}</div>}
-                    <div>Price: ${d.price?.toFixed(2)}</div>
-                    <div>Abs Change: ${d.changeAbsolute?.toFixed(2)}</div>
-                    <div className={d.change >= 0 ? "text-emerald-600" : "text-red-600"}>
-                      {d.change >= 0 ? "+" : ""}{(d.change ?? 0).toFixed(2)}%
-                    </div>
-                  </div>
+                  <motion.rect
+                    key={node.data.symbol}
+                    layout
+                    x={node.x}
+                    y={node.y}
+                    width={node.width}
+                    height={node.height}
+                    fill={changeColor(pct)}
+                    transition={animate ? { type: "spring", stiffness: 300, damping: 30 } : { duration: 0 }}
+                    onMouseEnter={() => setTooltip({ x: node.x + node.width / 2, y: node.y + node.height / 2, data: node.data })}
+                    onMouseLeave={() => setTooltip(null)}
+                    style={{ cursor: "pointer" }}
+                  />
                 );
-              }}
-            />
-          </Treemap>
-        </ResponsiveContainer>
+              })}
+              {layoutNodes.map((node) => {
+                if (node.width < 50 || node.height < 35) return null;
+                const pct = node.data.change || 0;
+                const textColor = pct > 0 ? "#052e16" : pct < 0 ? "#450a0a" : "#1f2937";
+                return (
+                  <motion.text
+                    key={`sym-${node.data.symbol}`}
+                    layout
+                    x={node.x + node.width / 2}
+                    y={node.y + node.height / 2 - 6}
+                    textAnchor="middle"
+                    fill={textColor}
+                    fontSize={node.width > 80 ? 13 : 10}
+                    fontWeight={700}
+                    transition={animate ? { type: "spring", stiffness: 300, damping: 30 } : { duration: 0 }}
+                  >
+                    {node.data.symbol}
+                  </motion.text>
+                );
+              })}
+              {layoutNodes.map((node) => {
+                if (node.width < 50 || node.height < 35) return null;
+                const pct = node.data.change || 0;
+                const textColor = pct > 0 ? "#052e16" : pct < 0 ? "#450a0a" : "#1f2937";
+                return (
+                  <motion.text
+                    key={`pct-${node.data.symbol}`}
+                    layout
+                    x={node.x + node.width / 2}
+                    y={node.y + node.height / 2 + 8}
+                    textAnchor="middle"
+                    fill={textColor}
+                    fontSize={10}
+                    opacity={0.85}
+                    transition={animate ? { type: "spring", stiffness: 300, damping: 30 } : { duration: 0 }}
+                  >
+                    {pct >= 0 ? "+" : ""}{pct.toFixed(2)}%
+                  </motion.text>
+                );
+              })}
+            </LayoutGroup>
+          </svg>
+        )}
+
+        {tooltip && (
+          <div
+            className="absolute bg-popover border rounded-lg p-2 text-xs shadow-md pointer-events-none"
+            style={{
+              left: tooltip.x,
+              top: tooltip.y,
+              transform: "translate(-50%, -100%)",
+              zIndex: 50,
+            }}
+          >
+            <div className="font-bold">{tooltip.data.symbol}</div>
+            <div className="text-muted-foreground">{tooltip.data.companyName}</div>
+            {typeof tooltip.data.sector === "string" && <div className="text-muted-foreground/80">{tooltip.data.sector}</div>}
+            <div>Price: ${tooltip.data.price?.toFixed(2)}</div>
+            <div>Abs Change: ${tooltip.data.changeAbsolute?.toFixed(2)}</div>
+            <div className={(tooltip.data.change ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}>
+              {(tooltip.data.change ?? 0) >= 0 ? "+" : ""}{(tooltip.data.change ?? 0).toFixed(2)}%
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

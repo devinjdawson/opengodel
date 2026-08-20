@@ -74,6 +74,11 @@ async def health_check() -> dict:
     return {"status": "healthy", "version": "0.1.0"}
 
 
+@app.get("/healthz")
+async def healthz_check() -> dict:
+    return {"status": "healthy", "version": "0.1.0"}
+
+
 @app.get("/openapi.json")
 async def get_openapi_spec() -> dict:
     return app.openapi()
