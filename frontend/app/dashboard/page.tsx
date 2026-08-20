@@ -1413,10 +1413,46 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
     return sectorColors[sector] || "#6b7280";
   };
 
-  const layoutNodes = useMemo(() => {
-    if (!containerWidth || !treemapData.length) return [];
-    return squarify(treemapData, 0, 0, containerWidth, 520);
-  }, [treemapData, containerWidth]);
+   const layoutNodes = useMemo(() => {
+     if (!containerWidth || !treemapData.length) return [];
+     const sortedData = [...treemapData];
+     // Apply the same sort order as processedItems to maintain consistency
+     sortedData.sort((a, b) => {
+       let aVal = 0;
+       let bVal = 0;
+       switch (sortBy) {
+         case "pctChange":
+           aVal = a.change || 0;
+           bVal = b.change || 0;
+           break;
+         case "absChange":
+           aVal = a.changeAbsolute || 0;
+           bVal = b.changeAbsolute || 0;
+           break;
+         case "marketCap":
+           aVal = a.size || 1;
+           bVal = b.size || 1;
+           break;
+         case "volume":
+           // Use symbol name for stable volume-based ordering
+           aVal = a.symbol || "";
+           bVal = b.symbol || "";
+           break;
+         case "symbol":
+           aVal = a.symbol || "";
+           bVal = b.symbol || "";
+           break;
+       }
+       // Apply the same sort order logic as processedItems
+       if (typeof aVal === "string") {
+         return sortOrder === "asc"
+           ? (aVal as string).localeCompare(bVal as string)
+           : (bVal as string).localeCompare(aVal as string);
+       }
+       return sortOrder === "asc" ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+     });
+     return squarify(sortedData, 0, 0, containerWidth, 520);
+   }, [treemapData, containerWidth, sortBy, sortOrder]);
 
   const [tooltip, setTooltip] = useState<{ x: number; y: number; data: TreemapDataPoint } | null>(null);
 
