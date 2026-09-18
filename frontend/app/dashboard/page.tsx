@@ -107,6 +107,8 @@ export default function DashboardPage() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   // Window management
   const [topZIndex, setTopZIndex] = useState(100);
@@ -204,6 +206,16 @@ export default function DashboardPage() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      const rect = entries[0]?.contentRect;
+      if (rect) setCanvasSize({ width: rect.width, height: rect.height });
+    });
+    observer.observe(canvasRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Auto-refresh heatmap at configured interval
   useEffect(() => {
@@ -967,7 +979,7 @@ export default function DashboardPage() {
         </header>
 
         {/* Dashboard - Floating Windows */}
-        <div className="flex-1 min-h-0 overflow-hidden relative bg-gray-950">
+        <div ref={canvasRef} className="flex-1 min-h-0 overflow-hidden relative bg-gray-950">
           {layout.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
               <LayoutDashboard className="size-16 mb-4 opacity-30" />
@@ -1001,6 +1013,7 @@ export default function DashboardPage() {
                     defaultPosition={defaultPos}
                     defaultSize={defaultSize}
                     zIndex={zIndex}
+                    containerBounds={canvasSize}
                     onFocus={() => bringWindowToFront(item.i)}
                     onPositionChange={(pos) => {
                       // Optional: save position

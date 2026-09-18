@@ -16,6 +16,7 @@ interface DraggableWrapperProps {
   onSizeChange?: (size: { width: number; height: number }) => void;
   onFocus?: () => void;
   zIndex?: number;
+  containerBounds?: { width: number; height: number };
 }
 
 type ResizeHandle = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw" | null;
@@ -33,6 +34,7 @@ export function DraggableWrapper({
   onSizeChange,
   onFocus,
   zIndex = 10,
+  containerBounds,
 }: DraggableWrapperProps) {
   const [position, setPosition] = useState(defaultPosition);
   const [size, setSize] = useState(defaultSize);
@@ -42,6 +44,16 @@ export function DraggableWrapper({
   const cardRef = useRef<HTMLDivElement>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
   const resizeStart = useRef({ x: 0, y: 0, width: 0, height: 0, posX: 0, posY: 0 });
+
+  const clampPosition = useCallback((x: number, y: number, w: number, h: number) => {
+    if (!containerBounds) return { x, y };
+    const maxX = Math.max(0, containerBounds.width - w);
+    const maxY = Math.max(0, containerBounds.height - h);
+    return {
+      x: Math.max(0, Math.min(x, maxX)),
+      y: Math.max(0, Math.min(y, maxY)),
+    };
+  }, [containerBounds]);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -90,9 +102,9 @@ export function DraggableWrapper({
       if (isDragging) {
         const newX = e.clientX - dragOffset.current.x;
         const newY = e.clientY - dragOffset.current.y;
-        const newPos = { x: Math.max(0, newX), y: Math.max(0, newY) };
-        setPosition(newPos);
-        onPositionChange?.(newPos);
+        const clamped = clampPosition(newX, newY, size.width, size.height);
+        setPosition(clamped);
+        onPositionChange?.(clamped);
       } else if (isResizing && resizeStart.current) {
         const deltaX = e.clientX - resizeStart.current.x;
         const deltaY = e.clientY - resizeStart.current.y;
@@ -138,12 +150,12 @@ export function DraggableWrapper({
             break;
         }
 
+        const clamped = clampPosition(newX, newY, newWidth, newHeight);
         const newSize = { width: newWidth, height: newHeight };
-        const newPos = { x: newX, y: newY };
         setSize(newSize);
-        setPosition(newPos);
+        setPosition(clamped);
         onSizeChange?.(newSize);
-        onPositionChange?.(newPos);
+        onPositionChange?.(clamped);
       }
     };
 
@@ -160,7 +172,7 @@ export function DraggableWrapper({
         document.removeEventListener("mouseup", handleMouseUp);
       };
     }
-  }, [isDragging, isResizing, onPositionChange, onSizeChange]);
+  }, [isDragging, isResizing, onPositionChange, onSizeChange, clampPosition]);
 
   const toggleMaximize = useCallback(
     (e: React.MouseEvent) => {
@@ -185,11 +197,11 @@ export function DraggableWrapper({
     <div
       ref={cardRef}
       style={{
-        position: "fixed",
+        position: "absolute",
         left: isMaximized ? 0 : position.x,
         top: isMaximized ? 0 : position.y,
-        width: isMaximized ? "100vw" : size.width,
-        height: isMaximized ? "100vh" : size.height,
+        width: isMaximized ? "100%" : size.width,
+        height: isMaximized ? "100%" : size.height,
         zIndex,
       }}
       className={cn("select-none", isDragging && "cursor-grabbing")}
