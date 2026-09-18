@@ -4,6 +4,8 @@ from typing import Any
 from openbb import obb
 from pydantic import BaseModel
 
+from app.services.cache_service import run_obb_sync
+
 
 class CandleData(BaseModel):
     timestamp: datetime
@@ -40,6 +42,25 @@ class OpenBBService:
         self._initialized = True
 
     def get_historical_prices(
+        self,
+        symbol: str,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        interval: str = "1d",
+        provider: str = "yfinance",
+    ) -> list[CandleData]:
+        return run_obb_sync(
+            self._fetch_historical_prices,
+            symbol,
+            start_date,
+            end_date,
+            interval,
+            provider,
+            name="equity.price.historical",
+            category="historical",
+        )
+
+    def _fetch_historical_prices(
         self,
         symbol: str,
         start_date: str | None = None,
@@ -86,6 +107,21 @@ class OpenBBService:
         limit: int = 50,
         provider: str = "benzinga",
     ) -> list[NewsData]:
+        return run_obb_sync(
+            self._fetch_news,
+            symbols,
+            limit,
+            provider,
+            name="news.world",
+            category="news",
+        )
+
+    def _fetch_news(
+        self,
+        symbols: str | None = None,
+        limit: int = 50,
+        provider: str = "benzinga",
+    ) -> list[NewsData]:
         params = {
             "limit": limit,
             "provider": provider,
@@ -116,10 +152,36 @@ class OpenBBService:
         query: str,
         provider: str = "yfinance",
     ) -> list[dict[str, Any]]:
+        return run_obb_sync(
+            self._fetch_search_equity,
+            query,
+            provider,
+            name="equity.search",
+            category="search",
+        )
+
+    def _fetch_search_equity(
+        self,
+        query: str,
+        provider: str = "yfinance",
+    ) -> list[dict[str, Any]]:
         result = obb.equity.search(query=query, provider=provider)
         return result.to_df().to_dict("records")
 
     def get_equity_quote(
+        self,
+        symbol: str,
+        provider: str = "yfinance",
+    ) -> dict[str, Any] | None:
+        return run_obb_sync(
+            self._fetch_equity_quote,
+            symbol,
+            provider,
+            name="equity.price.quote",
+            category="quote",
+        )
+
+    def _fetch_equity_quote(
         self,
         symbol: str,
         provider: str = "yfinance",
@@ -131,6 +193,19 @@ class OpenBBService:
         return data.iloc[0].to_dict()
 
     def get_company_profile(
+        self,
+        symbol: str,
+        provider: str = "yfinance",
+    ) -> dict[str, Any] | None:
+        return run_obb_sync(
+            self._fetch_company_profile,
+            symbol,
+            provider,
+            name="equity.profile",
+            category="fundamentals",
+        )
+
+    def _fetch_company_profile(
         self,
         symbol: str,
         provider: str = "yfinance",

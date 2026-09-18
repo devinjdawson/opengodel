@@ -1,9 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Any, Optional
 import pandas as pd
-import asyncio
-import functools
-import hashlib
 import json
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
@@ -35,59 +32,20 @@ async def set_default_provider(provider: str = Query(...)):
     return {"default_data_provider": provider, "status": "updated"}
 
 
-# Simple in-memory cache with TTL
-_cache_store = {}
-_cache_timestamps = {}
+# Delegates to the centralized cache service (TTL cache + coalescing).
+from app.services.cache_service import run_obb
 
 
-def _get_cache_key(func_name: str, args: tuple, kwargs: dict) -> str:
-    """Generate a cache key from function name and arguments."""
-    key_data = {
-        "func": func_name,
-        "args": str(args),
-        "kwargs": {k: v for k, v in sorted(kwargs.items())}
-    }
-    key_str = json.dumps(key_data, sort_keys=True)
-    return hashlib.md5(key_str.encode()).hexdigest()
-
-
-def _get_cached(key: str, ttl: int):
-    """Get value from cache if not expired."""
-    if key in _cache_store and key in _cache_timestamps:
-        if datetime.now() - _cache_timestamps[key] < timedelta(seconds=ttl):
-            return _cache_store[key]
-        else:
-            # Expired, remove from cache
-            del _cache_store[key]
-            del _cache_timestamps[key]
-    return None
-
-
-def _set_cached(key: str, value: Any):
-    """Set value in cache with current timestamp."""
-    _cache_store[key] = value
-    _cache_timestamps[key] = datetime.now()
-
-
-async def _run_obb_sync_cached(func, ttl: int = 3600, *args, **kwargs):
-    """Run synchronous OpenBB SDK call in thread pool with caching."""
-    cache_key = _get_cache_key(func.__name__, args, kwargs)
-    
-    # Check cache first
-    cached = _get_cached(cache_key, ttl)
-    if cached is not None:
-        return cached
-    
-    # Cache miss, call the function
-    loop = asyncio.get_event_loop()
-    if kwargs:
-        result = await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
-    else:
-        result = await loop.run_in_executor(None, func, *args)
-    
-    # Cache the result
-    _set_cached(cache_key, result)
-    return result
+async def _run_obb_sync_cached(func, ttl: int = 3600, *args, category: str = "default", **kwargs):
+    """Run a synchronous OpenBB SDK call via the shared cache layer."""
+    return await run_obb(
+        func,
+        *args,
+        name=getattr(func, "__name__", str(func)),
+        category=category,
+        ttl=ttl,
+        **kwargs,
+    )
 
 
 @router.get("/equity-search")
@@ -110,18 +68,26 @@ async def _run_obb_sync_cached(func, ttl: int = 3600, *args, **kwargs):
             },
             {
                 "paramName": "provider",
-                "value": "yfinance",
+                "value": "nasdaq",
                 "label": "Provider",
                 "show": True,
                 "type": "text",
-                "options": [{"label": "YFinance", "value": "yfinance"}, {"label": "FMP", "value": "fmp"}],
+                "options": [
+                    {"label": "NASDAQ", "value": "nasdaq"},
+                    {"label": "CBOE", "value": "cboe"},
+                    {"label": "Intrinio", "value": "intrinio"},
+                    {"label": "Marketaux", "value": "marketaux"},
+                    {"label": "SEC", "value": "sec"},
+                    {"label": "TMX", "value": "tmx"},
+                    {"label": "Tradier", "value": "tradier"},
+                ],
             },
         ],
     )
 )
 async def og_equity_search(
     query: str = Query("AAPL"),
-    provider: str = Query("yfinance"),
+    provider: str = Query("nasdaq"),
 ) -> Any:
     """OG AL command - equity search."""
     try:
@@ -160,14 +126,20 @@ async def og_equity_search(
                 "show": True,
                 "type": "text",
             },
-            {
-                "paramName": "provider",
-                "value": "yfinance",
-                "label": "Provider",
-                "show": True,
-                "type": "text",
-                "options": [{"label": "YFinance", "value": "yfinance"}, {"label": "FMP", "value": "fmp"}],
-            },
+{
+    "paramName": "provider",
+    "value": "yfinance",
+    "label": "Provider",
+    "show": True,
+    "type": "text",
+    "options": [
+        {"label": "YFinance", "value": "yfinance"},
+        {"label": "FMP", "value": "fmp"},
+        {"label": "Intrinio", "value": "intrinio"},
+        {"label": "NASDAQ", "value": "nasdaq"},
+        {"label": "TMX", "value": "tmx"},
+    ],
+},
         ],
     )
 )
@@ -568,74 +540,50 @@ async def og_institutional_ownership(
 
 
 @router.get("/dividend-history")
-@register_widget(
-    create_base_widget_config(
-        name="Dividend History (OG DVD)",
-        description="Dividend payments and yield history (DVD command)",
-        category="OG Terminal",
-        endpoint="dividend-history",
-        widget_type="chart",
-        chart_type="bar",
-        grid_w=40,
-        grid_h=25,
-        params=[
-            {
-                "paramName": "symbol",
-                "value": "AAPL",
-                "label": "Symbol",
-                "show": True,
-                "type": "text",
-            },
-            {
-                "paramName": "provider",
-                "value": settings.default_data_provider,
-                "label": "Provider",
-                "show": True,
-                "type": "text",
-                "options": [{"label": "YFinance", "value": "yfinance"}, {"label": "FMP", "value": "fmp"}],
-            },
-            {
-                "paramName": "theme",
-                "value": "dark",
-                "label": "Theme",
-                "show": True,
-                "type": "text",
-                "options": [{"label": "Dark", "value": "dark"}, {"label": "Light", "value": "light"}],
-            },
-        ],
-    )
-)
 async def og_dividend_history(
     symbol: str = Query("AAPL"),
     provider: str = Query(default_factory=lambda: settings.default_data_provider),
     theme: str = Query("dark"),
-) -> Any:
+):
     """OG DVD command - dividend history."""
     try:
         result = await _run_obb_sync_cached(obb.equity.fundamental.dividends, 3600, symbol=symbol.upper(), provider=provider)
         df = result.to_df()
         
         if df.empty:
-            return JSONResponse(content={"error": "No dividend data found"}, status_code=404)
+            return _ensure_json_serializable({"error": "No dividend data found"})
         
-        df["date"] = pd.to_datetime(df["date"])
-        df = df.sort_values("date")
+        # Handle different column names across providers
+        date_col = "ex_dividend_date" if "ex_dividend_date" in df.columns else ("date" if "date" in df.columns else None)
+        amount_col = "amount" if "amount" in df.columns else ("dividend" if "dividend" in df.columns else None)
+        yield_col = "yield" if "yield" in df.columns else ("dividend_yield" if "dividend_yield" in df.columns else None)
+        
+        if date_col is None or amount_col is None:
+            return _ensure_json_serializable({"error": f"Unexpected columns: {df.columns.tolist()}"})
         
         import plotly.graph_objects as go
+        
+        df[date_col] = pd.to_datetime(df[date_col])
+        df = df.sort_values(date_col)
+        
+        # Convert to lists for JSON serialization
+        x_values = df[date_col].dt.strftime("%Y-%m-%d").tolist()
+        y_values = df[amount_col].tolist()
         
         fig = go.Figure()
         
         fig.add_trace(go.Bar(
-            x=df["date"],
-            y=df["dividend"],
+            x=x_values,
+            y=y_values,
             name="Dividend",
             marker_color="#2962ff",
         ))
         
-        if "yield" in df.columns:
+        if yield_col and yield_col in df.columns:
+            y_yield = (df[yield_col] * 100).tolist()
             fig.add_trace(go.Scatter(
-                x=df["date"],
-                y=df["yield"] * 100,
+                x=x_values,
+                y=y_yield,
                 mode="lines+markers",
                 name="Yield (%)",
                 line=dict(color="#ef5350", width=2),
@@ -652,6 +600,7 @@ async def og_dividend_history(
         grid_color = "#2a2e39" if is_dark else "#e1e3e6"
         
         fig.update_layout(
+            title=f"{symbol} Dividend History",
             template="plotly_dark" if is_dark else "plotly_white",
             paper_bgcolor=bg_color,
             plot_bgcolor=bg_color,
@@ -663,6 +612,71 @@ async def og_dividend_history(
             height=500,
         )
         
-        return fig.to_dict()
+        import json
+        from fastapi.responses import JSONResponse
+        
+        # Build chart data manually to avoid any serialization issues
+        chart_data = {
+            "type": "chart",
+            "data": {
+                "chart": {
+                    "type": "bar",
+                    "data": [
+                        {
+                            "type": "bar",
+                            "x": x_values,
+                            "y": y_values,
+                            "name": "Dividend",
+                            "marker": {"color": "#2962ff"}
+                        }
+                    ],
+                    "layout": {
+                        "title": f"{symbol} Dividend History",
+                        "template": "plotly_dark" if is_dark else "plotly_white",
+                        "paper_bgcolor": bg_color,
+                        "plot_bgcolor": bg_color,
+                        "font": {"color": text_color},
+                        "xaxis": {"title": "Date", "gridcolor": grid_color},
+                        "yaxis": {"title": "Dividend ($)", "gridcolor": grid_color},
+                        "legend": {"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1},
+                        "margin": {"l": 50, "r": 50, "t": 30, "b": 50},
+                        "height": 500,
+                    }
+                }
+            }
+        }
+        
+        if yield_col and yield_col in df.columns:
+            y_yield = (df[yield_col] * 100).tolist()
+            chart_data["data"]["chart"]["data"].append({
+                "type": "scatter",
+                "x": x_values,
+                "y": y_yield,
+                "mode": "lines+markers",
+                "name": "Yield (%)",
+                "line": {"color": "#ef5350", "width": 2},
+                "yaxis": "y2"
+            })
+            chart_data["data"]["chart"]["layout"]["yaxis2"] = {
+                "title": "Yield (%)", "overlaying": "y", "side": "right", "showgrid": False
+            }
+        
+        import json
+
+        return _ensure_json_serializable(chart_data)
     except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        return _ensure_json_serializable({"error": str(e)})
+
+
+def _ensure_json_serializable(obj):
+    """Recursively convert numpy types to Python types for JSON serialization."""
+    import numpy as np
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, np.generic):
+        return obj.item()
+    elif isinstance(obj, dict):
+        return {k: _ensure_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_ensure_json_serializable(v) for v in obj]
+    return obj

@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Any, Optional, List
 import pandas as pd
-import asyncio
-import functools
 import json
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
@@ -11,16 +9,20 @@ from plotly.subplots import make_subplots
 
 from app.core.config import settings
 from app.core.widget_registry import register_widget, create_base_widget_config, WidgetResponse
+from app.services.cache_service import run_obb
 
 router = APIRouter(prefix="/widgets/macro", tags=["macro widgets"])
 
 
-async def _run_obb_sync(func, *args, **kwargs):
-    """Run synchronous OpenBB call in thread pool."""
-    loop = asyncio.get_event_loop()
-    if kwargs:
-        return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
-    return await loop.run_in_executor(None, func, *args)
+async def _run_obb_sync(func, *args, category: str = "macro", **kwargs):
+    """Run a synchronous OpenBB call via the shared cache layer."""
+    return await run_obb(
+        func,
+        *args,
+        name=getattr(func, "__name__", str(func)),
+        category=category,
+        **kwargs,
+    )
 
 
 async def _get_fred_series(series_id: str, start_date: str, end_date: str) -> pd.DataFrame:

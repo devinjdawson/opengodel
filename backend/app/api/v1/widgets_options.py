@@ -2,8 +2,6 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 import pandas as pd
 import numpy as np
-import asyncio
-import functools
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 import plotly.graph_objects as go
@@ -11,19 +9,23 @@ from plotly.subplots import make_subplots
 
 from app.core.config import settings
 from app.core.widget_registry import register_widget, create_base_widget_config, WidgetResponse
+from app.services.cache_service import run_obb
 
 router = APIRouter(prefix="/widgets/options", tags=["options widgets"])
+
 
 from openbb import obb
 
 
-async def _run_obb_sync(func, *args, **kwargs):
-    """Run synchronous OpenBB SDK call in thread pool."""
-    loop = asyncio.get_event_loop()
-    if kwargs:
-        return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
-    return await loop.run_in_executor(None, func, *args)
-
+async def _run_obb_sync(func, *args, category: str = "quote", **kwargs):
+    """Run a synchronous OpenBB SDK call via the shared cache layer."""
+    return await run_obb(
+        func,
+        *args,
+        name=getattr(func, "__name__", str(func)),
+        category=category,
+        **kwargs,
+    )
 
 async def _get_options_chain(
     symbol: str,

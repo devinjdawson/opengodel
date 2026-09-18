@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, RefreshCw, Search, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, ChevronLeft, ChevronRight, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, TrendingUp, Heart, GripVertical, Pencil } from "lucide-react";
 import { motion, LayoutGroup } from "motion/react";
 import { cn } from "@/lib/utils";
-import { SwapyContainer, SwapySlot, SwapyItem, SwapyHandle } from "@/components/swapy-layout";
+import { DraggableWrapper } from "@/components/draggable-wrapper";
 
 interface WidgetConfig {
   id: string;
@@ -108,8 +108,9 @@ export default function DashboardPage() {
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Edit mode for drag-and-drop layout
-  const [editMode, setEditMode] = useState(false);
+  // Window management
+  const [topZIndex, setTopZIndex] = useState(100);
+  const [windowZIndices, setWindowZIndices] = useState<Record<string, number>>({});
   const [widgetOrder, setWidgetOrder] = useState<Record<string, string>>({});
 
   // Default data provider
@@ -150,6 +151,12 @@ export default function DashboardPage() {
   const saveWidgetOrder = (order: Record<string, string>) => {
     setWidgetOrder(order);
     localStorage.setItem(`dashboard-order-${activeTemplate}-${activeTab}`, JSON.stringify(order));
+  };
+
+  const bringWindowToFront = (widgetId: string) => {
+    const newZIndex = topZIndex + 1;
+    setTopZIndex(newZIndex);
+    setWindowZIndices(prev => ({ ...prev, [widgetId]: newZIndex }));
   };
 
   // Load widgets and templates on mount
@@ -231,13 +238,13 @@ export default function DashboardPage() {
         console.warn("Failed to fetch widgets/templates, using empty state");
       }
       
-      let rawWidgets: any = null;
-      let templatesData: any = null;
+      let rawWidgets: unknown = null;
+      let templatesData: unknown = null;
       
       if (widgetsRes.ok) rawWidgets = await widgetsRes.json();
       if (templatesRes.ok) templatesData = await templatesRes.json();
       
-      let widgetsArray: any[];
+      let widgetsArray: unknown[];
       if (Array.isArray(rawWidgets)) {
         widgetsArray = rawWidgets;
       } else if (rawWidgets && typeof rawWidgets === "object") {
@@ -248,7 +255,8 @@ export default function DashboardPage() {
       
       const widgetsObj: Record<string, WidgetConfig> = {};
       for (const widget of widgetsArray) {
-        if (widget.endpoint) widgetsObj[widget.endpoint] = widget;
+        const w = widget as WidgetConfig;
+        if (w.endpoint) widgetsObj[w.endpoint] = w;
       }
       
       setWidgets(widgetsObj);
@@ -256,9 +264,10 @@ export default function DashboardPage() {
       
       const initialStates: Record<string, WidgetState> = {};
       for (const widget of widgetsArray) {
-        if (!widget.endpoint) continue;
+        const w = widget as WidgetConfig;
+        if (!w.endpoint) continue;
         const params: Record<string, string | number | boolean> = {};
-        for (const param of widget.params || []) {
+        for (const param of w.params || []) {
           params[param.paramName] = param.value;
         }
         for (const [key, value] of Object.entries(globalParams)) {
@@ -266,7 +275,7 @@ export default function DashboardPage() {
             params[key] = value;
           }
         }
-        initialStates[widget.endpoint] = {
+        initialStates[w.endpoint] = {
           params,
           data: null,
           loading: false,
@@ -562,7 +571,7 @@ export default function DashboardPage() {
 
     if (widget.type === "heatmap" && state.data) {
       const heatmapData = state.data.data?.length ? state.data : state.data.data?.chart?.data || state.data.data?.chart || state.data;
-      return <StockHeatmap data={heatmapData} widgetEndpoint={widget.endpoint} widgetParams={state.params} onParamChange={(param, value) => updateWidgetParam(widget.endpoint, param, value)} />;
+      return <StockHeatmap data={heatmapData} widgetParams={state.params} onParamChange={(param, value) => updateWidgetParam(widget.endpoint, param, value as string | number | boolean)} />;
     }
 
     if (widget.type === "table" && state.data) {
@@ -915,15 +924,6 @@ export default function DashboardPage() {
                 </Select>
               </div>
               <Button
-                variant={editMode ? "default" : "outline"}
-                onClick={() => setEditMode(!editMode)}
-                className="gap-1"
-                title={editMode ? "Done rearranging" : "Rearrange widgets"}
-              >
-                <Pencil className="h-4 w-4" />
-                <span className="hidden sm:inline">{editMode ? "Done" : "Edit"}</span>
-              </Button>
-              <Button
                 onClick={refreshAllWidgets}
                 disabled={layout.some(item => widgetStates[item.i]?.loading)}
                 className="gap-1"
@@ -966,14 +966,14 @@ export default function DashboardPage() {
           )}
         </header>
 
-        {/* Dashboard Grid */}
-        <div className="flex-1 min-h-0 overflow-auto p-4">
+        {/* Dashboard - Floating Windows */}
+        <div className="flex-1 min-h-0 overflow-hidden relative bg-gray-950">
           {layout.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-muted-foreground">
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
               <LayoutDashboard className="size-16 mb-4 opacity-30" />
               <p className="text-xl font-semibold">No widgets in this tab</p>
               <p className="text-sm mt-2 max-w-md text-center">
-                Select widgets from the left sidebar to add them to your dashboard, or check that the backend is running.
+                Select widgets from the left sidebar to add them to your dashboard.
               </p>
               <Button variant="outline" className="mt-6" onClick={() => setLeftSidebarOpen(true)}>
                 <Plus className="size-4 mr-2" />
@@ -981,86 +981,44 @@ export default function DashboardPage() {
               </Button>
             </div>
           ) : (
-            <SwapyContainer
-              className="grid-cols-12"
-              onLayoutChange={saveWidgetOrder}
-              initialLayout={widgetOrder}
-              enabled={editMode}
-            >
+            <>
               {layout.map((item, idx) => {
                 const widget = widgets[item.i];
                 const state = widget ? widgetStates[item.i] : null;
-                const itemKey = `${item.i}-${idx}`;
-                const slotId = `slot-${idx}`;
 
                 if (!widget || !state) {
-                  return (
-                    <SwapySlot key={itemKey} id={slotId} style={{ gridColumn: `span ${Math.min(12, Math.max(1, Math.round(item.w / 100 * 12)))}` }}>
-                      <SwapyItem id={item.i}>
-                        <Card
-                          className="p-4 border-destructive/50 relative group"
-                        >
-                          {editMode && <SwapyHandle />}
-                          <div className="flex flex-col gap-2">
-                            <p className="text-sm text-destructive">Widget not found: <code>{item.i}</code></p>
-                            <Button variant="destructive" size="sm" className="w-fit" onClick={() => removeWidgetFromDashboard(item.i)}>
-                              Remove
-                            </Button>
-                          </div>
-                        </Card>
-                      </SwapyItem>
-                    </SwapySlot>
-                  );
+                  return null;
                 }
 
-                const colSpan = Math.min(12, Math.max(1, Math.round(item.w / 100 * 12)));
+                const zIndex = windowZIndices[item.i] || (10 + idx);
+                const defaultPos = { x: 50 + (idx * 30), y: 50 + (idx * 30) };
+                const defaultSize = { width: 450, height: 350 };
 
                 return (
-                  <SwapySlot key={itemKey} id={slotId} style={{ gridColumn: `span ${colSpan}` }}>
-                    <SwapyItem id={item.i}>
-                      <Card
-                        className={cn(
-                          "flex flex-col overflow-hidden min-h-[200px] relative group",
-                          editMode && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background"
-                        )}
-                      >
-                        {editMode && <SwapyHandle />}
-                        <CardHeader className="flex flex-row items-center justify-between px-4 py-3 pb-2">
-                          <CardTitle className="text-base font-semibold truncate">{widget.name}</CardTitle>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">{widget.category}</Badge>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => refreshWidget(widget.endpoint)}
-                              disabled={state.loading || editMode}
-                              className="size-7"
-                            >
-                              <RefreshCw className={cn("size-4", state.loading && "animate-spin")} />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeWidgetFromDashboard(widget.endpoint)}
-                              disabled={editMode}
-                              className="size-7 text-destructive hover:text-destructive"
-                            >
-                              <X className="size-4" />
-                            </Button>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="flex-1 flex flex-col px-4 pb-4 pt-0 min-h-0 min-w-0">
-                          {renderParamControls(widget, state)}
-                          <div className="flex-1 min-h-0 min-w-0 mt-2 overflow-hidden">
-                            {renderWidget(widget, state)}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </SwapyItem>
-                  </SwapySlot>
+                  <DraggableWrapper
+                    key={item.i}
+                    title={widget.name}
+                    defaultPosition={defaultPos}
+                    defaultSize={defaultSize}
+                    zIndex={zIndex}
+                    onFocus={() => bringWindowToFront(item.i)}
+                    onPositionChange={(pos) => {
+                      // Optional: save position
+                    }}
+                    onSizeChange={(size) => {
+                      // Optional: save size
+                    }}
+                  >
+                    <div className="h-full flex flex-col">
+                      {renderParamControls(widget, state)}
+                      <div className="flex-1 min-h-0 overflow-auto p-2">
+                        {renderWidget(widget, state)}
+                      </div>
+                    </div>
+                  </DraggableWrapper>
                 );
               })}
-            </SwapyContainer>
+            </>
           )}
         </div>
       </main>
@@ -1197,25 +1155,17 @@ interface TreemapDataPoint {
   [key: string]: unknown;
 }
 
-interface TreemapContentProps {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  symbol?: string;
-  name?: string;
-  change?: number;
-  changeAbsolute?: number;
-  price?: number;
-  companyName?: string;
-  [key: string]: unknown;
-}
-
 interface StockHeatmapProps {
   data: { data: HeatmapItem[] };
-  widgetEndpoint: string;
-  widgetParams: Record<string, any>;
-  onParamChange: (param: string, value: any) => void;
+  widgetParams: Record<string, unknown>;
+  onParamChange: (param: string, value: unknown) => void;
+}
+
+interface HeatmapWidgetParams {
+  sortBy?: string;
+  sortOrder?: string;
+  sectors?: string;
+  animate?: boolean;
 }
 
 interface LayoutNode {
@@ -1292,12 +1242,13 @@ function squarify(data: TreemapDataPoint[], x: number, y: number, width: number,
   return results;
 }
 
-function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: StockHeatmapProps) {
-  const items: HeatmapItem[] = data?.data || [];
-  const [sortBy, setSortBy] = useState<string>(widgetParams.sortBy || "pctChange");
-  const [sortOrder, setSortOrder] = useState<string>(widgetParams.sortOrder || "desc");
-  const [selectedSectors, setSelectedSectors] = useState<string[]>(widgetParams.sectors ? widgetParams.sectors.split(",").filter(Boolean) : []);
-  const [animate, setAnimate] = useState(widgetParams.animate !== false);
+function StockHeatmap({ data, widgetParams, onParamChange }: StockHeatmapProps) {
+  const params = widgetParams as HeatmapWidgetParams;
+  const items = useMemo<HeatmapItem[]>(() => data?.data || [], [data?.data]);
+  const [sortBy, setSortBy] = useState<string>(params.sortBy || "pctChange");
+  const [sortOrder, setSortOrder] = useState<string>(params.sortOrder || "desc");
+  const [selectedSectors, setSelectedSectors] = useState<string[]>(params.sectors ? String(params.sectors).split(",").filter(Boolean) : []);
+  const [animate, setAnimate] = useState(params.animate !== false);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
@@ -1418,8 +1369,8 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
      const sortedData = [...treemapData];
      // Apply the same sort order as processedItems to maintain consistency
      sortedData.sort((a, b) => {
-       let aVal = 0;
-       let bVal = 0;
+      let aVal: number | string = 0;
+      let bVal: number | string = 0;
        switch (sortBy) {
          case "pctChange":
            aVal = a.change || 0;
@@ -1493,9 +1444,10 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
 
   useEffect(() => {
     if (data?.data) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLastUpdate(new Date());
     }
-  }, [data]);
+  }, [data?.data]);
 
   return (
     <div className="w-full min-h-[400px] flex flex-col gap-2">
@@ -1617,12 +1569,13 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
         ) : (
           <svg width={containerWidth} height={520} style={{ display: "block" }}>
             <LayoutGroup>
-              {layoutNodes.map((node) => {
+              {layoutNodes.map((node, i) => {
                 const pct = node.data.change || 0;
                 const textColor = pct > 0 ? "#052e16" : pct < 0 ? "#450a0a" : "#1f2937";
+                const nodeKey = `${node.data.symbol}-${i}`;
                 return (
                   <motion.rect
-                    key={node.data.symbol}
+                    key={nodeKey}
                     layout
                     x={node.x}
                     y={node.y}
@@ -1636,13 +1589,14 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
                   />
                 );
               })}
-              {layoutNodes.map((node) => {
+              {layoutNodes.map((node, i) => {
                 if (node.width < 50 || node.height < 35) return null;
                 const pct = node.data.change || 0;
                 const textColor = pct > 0 ? "#052e16" : pct < 0 ? "#450a0a" : "#1f2937";
+                const nodeKey = `${node.data.symbol}-${i}`;
                 return (
                   <motion.text
-                    key={`sym-${node.data.symbol}`}
+                    key={`sym-${nodeKey}`}
                     layout
                     x={node.x + node.width / 2}
                     y={node.y + node.height / 2 - 6}
@@ -1656,13 +1610,14 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
                   </motion.text>
                 );
               })}
-              {layoutNodes.map((node) => {
+              {layoutNodes.map((node, i) => {
                 if (node.width < 50 || node.height < 35) return null;
                 const pct = node.data.change || 0;
                 const textColor = pct > 0 ? "#052e16" : pct < 0 ? "#450a0a" : "#1f2937";
+                const nodeKey = `${node.data.symbol}-${i}`;
                 return (
                   <motion.text
-                    key={`pct-${node.data.symbol}`}
+                    key={`pct-${nodeKey}`}
                     layout
                     x={node.x + node.width / 2}
                     y={node.y + node.height / 2 + 8}
@@ -1705,8 +1660,23 @@ function StockHeatmap({ data, widgetEndpoint, widgetParams, onParamChange }: Sto
   );
 }
 
+interface PlotlyChartProps {
+  data: unknown;
+}
+
+interface ColumnDef {
+  field: string;
+  headerName?: string;
+  renderFn?: string;
+}
+
+interface DataTableProps {
+  data: unknown;
+  columns: ColumnDef[];
+}
+
 // Simple Plotly chart renderer
-function PlotlyChart({ data }: { data: any }) {
+function PlotlyChart({ data }: PlotlyChartProps) {
   const ref = useRef<HTMLDivElement | null>(null);
   
   useEffect(() => {
@@ -1714,7 +1684,9 @@ function PlotlyChart({ data }: { data: any }) {
     
     // Dynamic import of plotly.js-dist
     import("plotly.js-dist").then(Plotly => {
-      Plotly.newPlot(ref.current!, data.data || data, data.layout || {}, {
+      const plotData = (data as Record<string, unknown>).data || data;
+      const plotLayout = (data as Record<string, unknown>).layout || {};
+      Plotly.newPlot(ref.current!, plotData as unknown as Plotly.Data[], plotLayout as Plotly.Layout, {
         responsive: true,
         displayModeBar: true,
         modeBarButtonsToRemove: ["lasso2d", "select2d"],
@@ -1726,13 +1698,13 @@ function PlotlyChart({ data }: { data: any }) {
 }
 
 // Data table component
-function DataTable({ data, columns }: { data: any; columns: any[] }) {
+function DataTable({ data, columns }: DataTableProps) {
   if (!data) {
     return <div className="text-center text-muted-foreground py-8">No data</div>;
   }
 
   // Normalize data to array
-  let rows: any[];
+  let rows: Record<string, unknown>[];
   if (Array.isArray(data)) {
     rows = data;
   } else if (typeof data === 'object') {
@@ -1745,7 +1717,7 @@ function DataTable({ data, columns }: { data: any; columns: any[] }) {
     return <div className="text-center text-muted-foreground py-8">No data</div>;
   }
 
-  const cols = columns.length > 0 ? columns : Object.keys(rows[0]).map(key => ({ field: key, headerName: key }));
+  const cols = columns.length > 0 ? columns : Object.keys(rows[0]).map(key => ({ field: key, headerName: key, renderFn: undefined }));
 
   return (
     <div className="overflow-x-auto">
@@ -1767,7 +1739,7 @@ function DataTable({ data, columns }: { data: any; columns: any[] }) {
                 {cols.map(col => {
                   const value = row[col.field];
 
-                  if (col.renderFn === "link" && value) {
+                  if (col.renderFn === "link" && typeof value === "string") {
                     return (
                       <td key={col.field} className="p-2">
                         <a href={value} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
@@ -1795,7 +1767,7 @@ function DataTable({ data, columns }: { data: any; columns: any[] }) {
 
                   return (
                     <td key={col.field} className="p-2">
-                      {value ?? "—"}
+                      {value !== undefined && value !== null ? String(value) : "—"}
                     </td>
                   );
                 })}

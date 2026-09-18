@@ -1,4 +1,5 @@
 import type { NextConfig } from "next"
+import { withSentryConfig } from "@sentry/nextjs"
 
 const nextConfig: NextConfig = {
   typescript: {
@@ -34,4 +35,16 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+const sentryConfig = withSentryConfig(nextConfig, {
+  org: "opengodel",
+  project: "frontend",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+  sourcemaps: {
+    disable: true,
+  },
+  disableLogger: true,
+  automaticVercelMonitors: true,
+})
+
+export default sentryConfig

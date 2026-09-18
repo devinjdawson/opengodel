@@ -1,4 +1,10 @@
 from contextlib import asynccontextmanager
+import re
+
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.integrations.openai import OpenAIIntegration
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
@@ -10,6 +16,71 @@ from app.core.config import settings
 from app.core.database import close_db, init_db
 from app.core.widget_registry import get_widgets, get_templates, set_templates, load_templates_from_file
 from app.services.scheduler import shutdown_scheduler, start_scheduler
+
+
+_langfuse_client = None
+
+
+def get_langfuse():
+    global _langfuse_client
+    if _langfuse_client is None:
+        if settings.langfuse_public_key and settings.langfuse_secret_key:
+            from langfuse import Langfuse
+            _langfuse_client = Langfuse(
+                public_key=settings.langfuse_public_key,
+                secret_key=settings.langfuse_secret_key,
+                base_url=settings.langfuse_base_url,
+            )
+    return _langfuse_client
+
+
+def _scrub_sensitive_data(value: str) -> str:
+    if not isinstance(value, str):
+        return value
+    patterns = [
+        re.compile(r'sk-[a-zA-Z0-9]{20,}'),
+        re.compile(r'Bearer\s+[a-zA-Z0-9\-_\.]+'),
+        re.compile(r'"openai_api_key"\s*:\s*"[^"]+"'),
+        re.compile(r'"inference_api_key"\s*:\s*"[^"]+"'),
+        re.compile(r'"embedding_api_key"\s*:\s*"[^"]+"'),
+        re.compile(r'"marketaux_api_key"\s*:\s*"[^"]+"'),
+        re.compile(r'"openbb_api_key"\s*:\s*"[^"]+"'),
+        re.compile(r'"openbb_pat"\s*:\s*"[^"]+"'),
+    ]
+    for pattern in patterns:
+        value = pattern.sub('[REDACTED]', value)
+    return value
+
+
+def before_send(event, hint):
+    if event.get('request') and event['request'].get('data'):
+        event['request']['data'] = _scrub_sensitive_data(event['request']['data'])
+    if event.get('exception') and event['exception'].get('values'):
+        for exc in event['exception']['values']:
+            if exc.get('value'):
+                exc['value'] = _scrub_sensitive_data(exc['value'])
+            if exc.get('type'):
+                exc['type'] = _scrub_sensitive_data(exc['type'])
+    return event
+
+
+# if settings.sentry_dsn:
+#     sentry_sdk.init(
+#         dsn=settings.sentry_dsn,
+#         environment=settings.sentry_environment,
+#         release=settings.sentry_release,
+#         send_default_pii=False,
+#         integrations=[
+#             FastApiIntegration(),
+#             LoggingIntegration(),
+#             OpenAIIntegration(),
+#         ],
+#         traces_sample_rate=1.0,
+#         profile_session_sample_rate=1.0,
+#         profile_lifecycle="trace",
+#         enable_logs=True,
+#         before_send=before_send,
+#     )
 
 
 @asynccontextmanager
@@ -36,6 +107,10 @@ async def lifespan(app: FastAPI):
     await shutdown_scheduler()
     await close_db()
     await redis.close()
+
+    langfuse = get_langfuse()
+    if langfuse:
+        langfuse.shutdown()
 
 
 app = FastAPI(
@@ -74,9 +149,63 @@ async def health_check() -> dict:
     return {"status": "healthy", "version": "0.1.0"}
 
 
+@app.get("/cache/stats")
+async def cache_stats_endpoint() -> dict:
+    from app.services.cache_service import cache_stats
+
+    return cache_stats()
+
+
+@app.post("/cache/clear")
+async def cache_clear_endpoint() -> dict:
+    from app.services.cache_service import clear_cache
+
+    cleared = clear_cache()
+    return {"cleared": cleared}
+
+
 @app.get("/healthz")
 async def healthz_check() -> dict:
     return {"status": "healthy", "version": "0.1.0"}
+
+
+@app.get("/test-json-response")
+async def test_json_response():
+    from fastapi.responses import JSONResponse
+    return JSONResponse(content={"test": "value", "data": [1, 2, 3]})
+
+
+@app.get("/test-chart-data")
+async def test_chart_data():
+    return {
+        "type": "chart",
+        "data": {
+            "chart": {
+                "type": "bar",
+                "data": [
+                    {
+                        "type": "bar",
+                        "x": ["2023-01-01", "2023-02-01"],
+                        "y": [1.0, 2.0],
+                        "name": "Dividend",
+                        "marker": {"color": "#2962ff"}
+                    }
+                ],
+                "layout": {
+                    "title": "Test Chart",
+                    "template": "plotly_white",
+                    "paper_bgcolor": "#ffffff",
+                    "plot_bgcolor": "#ffffff",
+                    "font": {"color": "#131722"},
+                    "xaxis": {"title": "Date", "gridcolor": "#e1e3e6"},
+                    "yaxis": {"title": "Dividend ($)", "gridcolor": "#e1e3e6"},
+                    "legend": {"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1},
+                    "margin": {"l": 50, "r": 50, "t": 30, "b": 50},
+                    "height": 500,
+                }
+            }
+        }
+    }
 
 
 @app.get("/openapi.json")

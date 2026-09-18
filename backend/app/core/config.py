@@ -94,6 +94,34 @@ class Settings(BaseSettings):
         description="OpenAI API key (used as fallback for inference/embedding)",
     )
 
+    # Langfuse
+    langfuse_public_key: Optional[str] = Field(
+        default=None,
+        description="Langfuse public key",
+    )
+    langfuse_secret_key: Optional[str] = Field(
+        default=None,
+        description="Langfuse secret key",
+    )
+    langfuse_base_url: str = Field(
+        default="https://cloud.langfuse.com",
+        description="Langfuse base URL",
+    )
+
+    # Sentry
+    sentry_dsn: Optional[str] = Field(
+        default=None,
+        description="Sentry DSN for error monitoring",
+    )
+    sentry_environment: str = Field(
+        default="development",
+        description="Sentry environment name",
+    )
+    sentry_release: Optional[str] = Field(
+        default=None,
+        description="Sentry release version",
+    )
+
     # App
     app_env: str = Field(default="development", description="Application environment")
     log_level: str = Field(default="INFO", description="Logging level")

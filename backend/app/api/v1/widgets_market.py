@@ -1,24 +1,36 @@
 from datetime import datetime, timedelta
-from typing import Any, Optional
-import asyncio
-import functools
+from typing import Any
 import json
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
-from fastapi_cache.decorator import cache
 
 from app.core.config import settings
 from app.core.widget_registry import register_widget, create_base_widget_config
+from app.services.cache_service import run_obb
+
+async def _run_obb_sync_cached(func, ttl: int = 3600, *args, category: str = "default", **kwargs):
+    """Run a synchronous OpenBB SDK call via the shared cache layer."""
+    return await run_obb(
+        func,
+        *args,
+        name=getattr(func, "__name__", str(func)),
+        category=category,
+        ttl=ttl,
+        **kwargs,
+    )
+
+
+async def _run_obb_sync(func, *args, category: str = "quote", **kwargs):
+    """Run a synchronous OpenBB SDK call via the shared cache layer."""
+    return await run_obb(
+        func,
+        *args,
+        name=getattr(func, "__name__", str(func)),
+        category=category,
+        **kwargs,
+    )
 
 router = APIRouter(prefix="/widgets/market", tags=["market widgets"])
-
-
-async def _run_obb_sync(func, *args, **kwargs):
-    """Run synchronous OpenBB call in thread pool."""
-    loop = asyncio.get_event_loop()
-    if kwargs:
-        return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
-    return await loop.run_in_executor(None, func, *args)
 
 
 SP500_TOP = [
@@ -35,7 +47,7 @@ SP500_FULL = SP500_TOP + [
     "SNOW", "PLTR", "MDB", "NET", "ESTC", "TWLO", "DOCU", "ZM", "SHOP", "SQ",
     "ROKU", "PINS", "SNAP", "UBER", "LYFT", "ABNB", "DASH", "COIN", "HOOD", "SOFI",
     "UPST", "AFRM", "NU", "MELI", "SEA", "BABA", "JD", "PDD", "TME", "BILI",
-    "NIO", "XPEV", "LI", "RIVN", "LCID", "F", "GM", "TSLA", "NVDA", "AMD",
+    "NIO", "XPEV", "LI", "RIVN", "LCID", "F", "GM",
 ]
 
 MOST_ACTIVE = [
@@ -47,7 +59,7 @@ MOST_ACTIVE = [
 INDICES = [
     "SPY", "QQQ", "DIA", "IWM", "VTI", "VOO", "IVV", "SPLG", "SCHB", "ITOT",
     "XLF", "XLK", "XLE", "XLV", "XLI", "XLP", "XLY", "XLU", "XLB", "XLRE",
-    "XLRE", "XLC", "SMH", "SOXX", "ARKK", "ARKQ", "ARKW", "ARKG", "ARKF",
+    "XLC", "SMH", "SOXX", "ARKK", "ARKQ", "ARKW", "ARKG", "ARKF",
 ]
 
 SECTORS = [
@@ -163,15 +175,17 @@ async def market_heatmap(
 
         from openbb import obb
 
-        df = await _run_obb_sync(
+        df = await _run_obb_sync_cached(
             obb.equity.profile,
+            ttl=60,
             symbol=",".join(symbol_list),
             provider=provider,
         )
         profile_df = df.to_df()
 
-        prices = await _run_obb_sync(
+        prices = await _run_obb_sync_cached(
             obb.equity.price.quote,
+            ttl=60,
             symbol=",".join(symbol_list),
             provider=provider,
         )

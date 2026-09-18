@@ -1,7 +1,5 @@
 """Market sentiment widgets built on Marketaux news data."""
 
-import asyncio
-import functools
 import json
 from datetime import datetime, timedelta
 from typing import Any
@@ -21,13 +19,7 @@ router = APIRouter(prefix="/widgets/sentiment", tags=["sentiment widgets"])
 
 from openbb import obb
 
-
-async def _run_obb_sync(func, *args, **kwargs):
-    """Run synchronous OpenBB SDK call in thread pool."""
-    loop = asyncio.get_event_loop()
-    if kwargs:
-        return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
-    return await loop.run_in_executor(None, func, *args)
+from app.services.cache_service import run_obb
 
 
 def _normalize_symbols(symbols: str) -> list[str]:
@@ -88,8 +80,10 @@ async def sentiment_summary(
         all_rows = []
         for symbol in symbol_list:
             try:
-                result = await _run_obb_sync(
+                result = await run_obb(
                     obb.marketaux.sentiment,
+                    name="marketaux.sentiment",
+                    category="sentiment",
                     provider="marketaux",
                     symbol=symbol,
                     start_date=_published_after(days),
@@ -177,8 +171,10 @@ async def sentiment_breakdown(
         if symbol_list:
             for symbol in symbol_list:
                 try:
-                    result = await _run_obb_sync(
+                    result = await run_obb(
                         obb.marketaux.sentiment_breakdown,
+                        name="marketaux.sentiment_breakdown",
+                        category="sentiment",
                         provider="marketaux",
                         symbol=symbol,
                         start_date=_published_after(days),
@@ -194,8 +190,10 @@ async def sentiment_breakdown(
                             status_code=403,
                         )
         else:
-            result = await _run_obb_sync(
+            result = await run_obb(
                 obb.marketaux.sentiment_breakdown,
+                name="marketaux.sentiment_breakdown",
+                category="sentiment",
                 provider="marketaux",
                 symbol="",
                 start_date=_published_after(days),
@@ -319,8 +317,10 @@ async def sentiment_history(
         all_rows = []
         for symbol in symbol_list:
             try:
-                result = await _run_obb_sync(
+                result = await run_obb(
                     obb.marketaux.sentiment_history,
+                    name="marketaux.sentiment_history",
+                    category="sentiment",
                     provider="marketaux",
                     symbol=symbol,
                     interval=interval,
@@ -426,7 +426,15 @@ async def trending_entities(
 ) -> Any:
     """Trending entities from Marketaux. Requires Marketaux Standard plan or above."""
     try:
-        result = await _run_obb_sync(obb.marketaux.trending, provider="marketaux", countries=countries, limit=limit, start_date=_published_after(days))
+        result = await run_obb(
+            obb.marketaux.trending,
+            name="marketaux.trending",
+            category="sentiment",
+            provider="marketaux",
+            countries=countries,
+            limit=limit,
+            start_date=_published_after(days),
+        )
         df = result.to_df()
 
         if df.empty:
@@ -501,13 +509,19 @@ async def marketaux_news_market(
 ) -> Any:
     """Market-wide news from Marketaux."""
     try:
-        kwargs = {"provider": "marketaux", "limit": limit}
+        news_kwargs: dict = {"limit": limit}
         if search:
-            kwargs["search"] = search
+            news_kwargs["search"] = search
         if sentiment:
-            kwargs["sentiment"] = sentiment
+            news_kwargs["sentiment"] = sentiment
 
-        result = await _run_obb_sync(obb.news.world, **kwargs)
+        result = await run_obb(
+            obb.news.world,
+            name="news.world",
+            category="news",
+            provider="marketaux",
+            **news_kwargs,
+        )
         df = result.to_df()
 
         if df.empty:
@@ -575,7 +589,15 @@ async def marketaux_news_company(
 ) -> Any:
     """Company-specific news from Marketaux."""
     try:
-        result = await _run_obb_sync(obb.news.company, provider="marketaux", symbol=symbol.upper(), limit=limit, start_date=_published_after(days))
+        result = await run_obb(
+            obb.news.company,
+            name="news.company",
+            category="news",
+            provider="marketaux",
+            symbol=symbol.upper(),
+            limit=limit,
+            start_date=_published_after(days),
+        )
         df = result.to_df()
 
         if df.empty:
