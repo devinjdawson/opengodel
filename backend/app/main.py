@@ -11,7 +11,7 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 
-from app.api.v1 import equity, news, ai, widgets_equity, widgets_macro, widgets_news, widgets_options, widgets_portfolio, widgets_godel, widgets_market, widgets_sentiment
+from app.api.v1 import equity, news, ai, widgets_equity, widgets_macro, widgets_news, widgets_options, widgets_portfolio, widgets_godel, widgets_market, widgets_sentiment, widgets_crypto
 from app.core.config import settings
 from app.core.database import close_db, init_db
 from app.core.widget_registry import get_widgets, get_templates, set_templates, load_templates_from_file
@@ -46,6 +46,8 @@ def _scrub_sensitive_data(value: str) -> str:
         re.compile(r'"marketaux_api_key"\s*:\s*"[^"]+"'),
         re.compile(r'"openbb_api_key"\s*:\s*"[^"]+"'),
         re.compile(r'"openbb_pat"\s*:\s*"[^"]+"'),
+        re.compile(r'"cg_api_key"\s*:\s*"[^"]+"'),
+        re.compile(r'CG-[a-zA-Z0-9\-_]{20,}'),
     ]
     for pattern in patterns:
         value = pattern.sub('[REDACTED]', value)
@@ -142,6 +144,7 @@ app.include_router(widgets_portfolio.router)
 app.include_router(widgets_godel.router)
 app.include_router(widgets_market.router)
 app.include_router(widgets_sentiment.router)
+app.include_router(widgets_crypto.router)
 
 
 @app.get("/health")

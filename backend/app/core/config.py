@@ -40,6 +40,12 @@ class Settings(BaseSettings):
         description="Default data provider for widgets: yfinance, fmp, polygon, etc.",
     )
 
+    # CoinGecko (Demo plan: base URL api.coingecko.com, header x-cg-demo-api-key)
+    cg_api_key: Optional[str] = Field(
+        default=None,
+        description="CoinGecko API key (CG-... demo key) for crypto market data",
+    )
+
     # Inference (LLM) - for chat, reasoning, tool calling
     inference_provider: str = Field(
         default="openai",

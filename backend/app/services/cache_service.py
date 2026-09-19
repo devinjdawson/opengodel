@@ -61,6 +61,7 @@ TTL_CONFIG: dict[str, int] = {
 PROVIDER_MULTIPLIER: dict[str, float] = {
     "marketaux": 4.0,   # very limited daily requests
     "fmp": 3.0,         # 250/day free tier
+    "coingecko": 2.0,   # demo plan: 30 calls/min, conserve aggressively
     "yfinance": 1.0,
     "cboe": 1.0,
     "fred": 1.0,
@@ -76,6 +77,7 @@ PROVIDER_MULTIPLIER: dict[str, float] = {
 PROVIDER_DAILY_LIMIT: dict[str, int] = {
     "fmp": 240,        # 250/day documented; leave headroom for manual testing
     "marketaux": 95,   # ~100/day documented; leave headroom
+    "coingecko": 1500, # demo plan: 30 calls/min burst; daily budget conserves quota
 }
 
 # After a throttling-style failure (429/402/quota), block the provider for this
@@ -90,6 +92,7 @@ _THROTTLE_MARKERS = (
     "quota",
     "402",
     "payment required",
+    "10005",
 )
 
 
@@ -406,6 +409,69 @@ def run_obb_sync(
     _memory_set(cache_key, result, effective_ttl)
     _record_usage(provider, "upstream")
     return result
+
+
+async def run_cached_async(
+    fetch_fn: Callable[[], Any],
+    *,
+    name: str,
+    category: str = "default",
+    ttl: Optional[int] = None,
+    provider: Optional[str] = None,
+    force: bool = False,
+) -> Any:
+    """Cache an arbitrary async upstream call (non-OpenBB providers).
+
+    Mirrors :func:`run_obb` (TTL cache, request coalescing, provider budget
+    gate, stale-on-block degradation) for services that fetch data directly,
+    e.g. the CoinGecko REST API.
+
+    Args:
+        fetch_fn:  Zero-argument async callable performing the upstream request.
+        name:      Unique, deterministic key for this exact call. Encode all
+                   request parameters into the name (e.g.
+                   ``"coingecko.coins.markets:usd:100:1:market_cap_desc"``).
+        category:  Data category driving the base TTL (see TTL_CONFIG).
+        ttl:       Explicit TTL override in seconds.
+        provider:  Provider name for the budget/cooldown gate and usage stats.
+        force:     Skip the cache read and refresh.
+    """
+    cache_key = _make_cache_key(name, (), {})
+    effective_ttl = ttl if ttl is not None else _resolve_ttl(category, provider)
+
+    if not force:
+        cached = _memory_get(cache_key)
+        if cached is not None:
+            _record_usage(provider, "hits")
+            return cached
+
+    lock = await _acquire_key_lock(cache_key)
+    async with lock:
+        if not force:
+            cached = _memory_get(cache_key)
+            if cached is not None:
+                _record_usage(provider, "hits")
+                return cached
+
+        block_reason = _upstream_gate(provider, cache_key)
+        if block_reason:
+            stale = _memory_get(cache_key, allow_stale=True)
+            if stale is not None:
+                _record_usage(provider, "hits")
+                return stale
+            raise ProviderBlocked(
+                f"Provider '{provider}' temporarily refusing upstream calls ({block_reason}); "
+                f"no cached data available for this request."
+            )
+        try:
+            result = await fetch_fn()
+        except Exception as exc:
+            _record_usage(provider, "errors")
+            _note_provider_error(provider, exc)
+            raise
+        _memory_set(cache_key, result, effective_ttl)
+        _record_usage(provider, "upstream")
+        return result
 
 
 # ---------------------------------------------------------------------------

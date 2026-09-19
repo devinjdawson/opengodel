@@ -199,6 +199,8 @@ export default function DashboardPage() {
       market: "market",
       Sentiment: "sentiment",
       sentiment: "sentiment",
+      Crypto: "crypto",
+      crypto: "crypto",
     };
     return map[cat] || cat.toLowerCase().replace(/\s+/g, "-");
   };
