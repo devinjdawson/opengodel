@@ -217,7 +217,7 @@ export default function DashboardPage() {
     });
     observer.observe(canvasRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [loading]);
 
   // Auto-refresh heatmap at configured interval
   useEffect(() => {
@@ -1691,6 +1691,8 @@ interface DataTableProps {
 }
 
 // Simple Plotly chart renderer
+let plotlyModule: { Plots: { resize: (el: HTMLElement) => void }; newPlot: (...args: unknown[]) => void } | null = null;
+
 function PlotlyChart({ data }: PlotlyChartProps) {
   const ref = useRef<HTMLDivElement | null>(null);
   
@@ -1699,6 +1701,7 @@ function PlotlyChart({ data }: PlotlyChartProps) {
     
     // Dynamic import of plotly.js-dist
     import("plotly.js-dist").then(Plotly => {
+      plotlyModule = Plotly as unknown as typeof plotlyModule;
       const plotData = (data as Record<string, unknown>).data || data;
       const plotLayout = (data as Record<string, unknown>).layout || {};
       Plotly.newPlot(ref.current!, plotData as unknown as Plotly.Data[], plotLayout as Plotly.Layout, {
@@ -1708,6 +1711,25 @@ function PlotlyChart({ data }: PlotlyChartProps) {
       });
     });
   }, [data]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        if (plotlyModule && el.querySelector(".js-plotly-plot")) {
+          plotlyModule.Plots.resize(el);
+        }
+      });
+    });
+    ro.observe(el);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, []);
 
   return <div ref={ref} style={{ width: "100%", height: "100%", minHeight: "300px" }} />;
 }
