@@ -6,12 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, RefreshCw, Search, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, ChevronLeft, ChevronRight, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, TrendingUp, Heart, GripVertical, Pencil } from "lucide-react";
+import { Loader2, RefreshCw, Search, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, TrendingUp, Heart, GripVertical, Pencil, PanelLeft, Bitcoin } from "lucide-react";
 import { motion, LayoutGroup } from "motion/react";
 import { cn } from "@/lib/utils";
 import { DraggableWrapper } from "@/components/draggable-wrapper";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface WidgetConfig {
   id: string;
@@ -73,6 +82,7 @@ const CATEGORIES = [
   { id: "options", name: "Options", icon: PieChart },
   { id: "portfolio", name: "Portfolio", icon: Table },
   { id: "sentiment", name: "Sentiment", icon: Heart },
+  { id: "crypto", name: "Crypto", icon: Bitcoin },
   { id: "og", name: "OG Terminal", icon: Settings },
 ];
 
@@ -90,7 +100,8 @@ export default function DashboardPage() {
   });
   
   // Sidebar states
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>("equity");
   const [widgetSearch, setWidgetSearch] = useState("");
@@ -713,31 +724,32 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-dvh bg-background overflow-hidden">
-      {/* Left Sidebar - Widget Library / Navigation */}
-      <aside
-        className={cn(
-          "flex flex-col border-r bg-card flex-shrink-0 overflow-hidden",
-          leftSidebarOpen ? "w-80" : "w-16"
-        )}
+      {/* Widget Library Drawer */}
+      <Drawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        showSwipeHandle={isMobile}
+        swipeDirection={isMobile ? "down" : "left"}
       >
-        <div className="flex h-16 flex-shrink-0 items-center justify-between border-b px-4">
-          {leftSidebarOpen && (
-            <h2 className="text-lg font-semibold truncate">Widget Library</h2>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
-            className="size-8"
-            aria-label={leftSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-          >
-            {leftSidebarOpen ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
-          </Button>
-        </div>
+        <DrawerContent className={cn("flex-col", !isMobile && "[--drawer-content-width:20rem]")}>
+          <DrawerHeader className="border-b p-2">
+            <div className="flex items-center justify-between w-full">
+              <DrawerTitle>Widget Library</DrawerTitle>
+              <DrawerClose
+                render={
+                  <Button variant="ghost" size="icon" className="size-8" aria-label="Close widget library" />
+                }
+              >
+                <X className="size-4" />
+              </DrawerClose>
+            </div>
+            <DrawerDescription className="sr-only">
+              Browse widget categories, search, and add widgets to your dashboard
+            </DrawerDescription>
+          </DrawerHeader>
 
-        {leftSidebarOpen && (
           <div className="flex-1 flex flex-col min-h-0">
-            {/* Category Tabs - Use buttons instead of Base UI Tabs */}
+            {/* Category Tabs */}
             <div className="flex-shrink-0 border-b p-2">
               <div className="grid grid-cols-3 gap-1">
                 {CATEGORIES.map(cat => (
@@ -831,9 +843,8 @@ export default function DashboardPage() {
             </div>
 
             {/* Quick Actions */}
-            <Separator />
-            <div className="flex-shrink-0 p-2 flex flex-col gap-1">
-              <Button variant="outline" size="sm" className="w-full justify-start gap-2 text-sm" onClick={() => setRightSidebarOpen(true)}>
+            <DrawerFooter className="p-2 pt-2">
+              <Button variant="outline" size="sm" className="w-full justify-start gap-2 text-sm" onClick={() => { setDrawerOpen(false); setRightSidebarOpen(true); }}>
                 <Bot className="size-4" />
                 Open AI Assistant
               </Button>
@@ -845,10 +856,10 @@ export default function DashboardPage() {
                 <History className="size-4" />
                 View History
               </Button>
-            </div>
+            </DrawerFooter>
           </div>
-        )}
-      </aside>
+        </DrawerContent>
+      </Drawer>
 
       {/* Main Content - Dashboard Grid */}
       <main className="flex-1 flex flex-col min-w-0">
@@ -856,6 +867,15 @@ export default function DashboardPage() {
         <header className="border-b bg-card flex-shrink-0">
           <div className="flex h-16 items-center justify-between px-4">
             <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setDrawerOpen(true)}
+                className="size-9"
+                aria-label="Open widget library"
+              >
+                <PanelLeft className="size-5" />
+              </Button>
               <h1 className="text-xl font-bold">OG Terminal</h1>
               
               {/* Template Selector */}
@@ -987,9 +1007,9 @@ export default function DashboardPage() {
               <LayoutDashboard className="size-16 mb-4 opacity-30" />
               <p className="text-xl font-semibold">No widgets in this tab</p>
               <p className="text-sm mt-2 max-w-md text-center">
-                Select widgets from the left sidebar to add them to your dashboard.
+                Select widgets from the widget library to add them to your dashboard.
               </p>
-              <Button variant="outline" className="mt-6" onClick={() => setLeftSidebarOpen(true)}>
+              <Button variant="outline" className="mt-6" onClick={() => setDrawerOpen(true)}>
                 <Plus className="size-4 mr-2" />
                 Browse Widgets
               </Button>
