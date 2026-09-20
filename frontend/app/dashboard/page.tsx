@@ -102,7 +102,7 @@ export default function DashboardPage() {
   // Sidebar states
   const [drawerOpen, setDrawerOpen] = useState(false);
   const isMobile = useIsMobile();
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("equity");
   const [widgetSearch, setWidgetSearch] = useState("");
   
@@ -970,7 +970,7 @@ export default function DashboardPage() {
                 size="icon"
                 onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
                 className="h-9 w-9"
-                aria-label={rightSidebarOpen ? "Close chat" : "Open chat"}
+                aria-label={rightSidebarOpen ? "Close AI chat" : "Open AI chat"}
               >
                 <MessageSquare className="h-5 w-5" />
               </Button>
@@ -1058,24 +1058,32 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      {/* Right Sidebar - AI Chat Assistant */}
-      {rightSidebarOpen && (
-        <aside className="flex flex-col border-l bg-card flex-shrink-0 w-96 h-full">
-          <div className="flex h-16 flex-shrink-0 items-center justify-between border-b px-4">
-            <div className="flex items-center gap-2">
-              <Bot className="size-5 text-primary" />
-              <h2 className="text-lg font-semibold">AI Assistant</h2>
+      {/* AI Chat Assistant Drawer */}
+      <Drawer
+        open={rightSidebarOpen}
+        onOpenChange={setRightSidebarOpen}
+        showSwipeHandle={isMobile}
+        swipeDirection={isMobile ? "down" : "right"}
+      >
+        <DrawerContent className={cn("flex-col", !isMobile && "[--drawer-content-width:24rem]")}>
+          <DrawerHeader className="border-b p-2">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <Bot className="size-5 text-primary" />
+                <DrawerTitle>AI Assistant</DrawerTitle>
+              </div>
+              <DrawerClose
+                render={
+                  <Button variant="ghost" size="icon" className="size-8" aria-label="Close assistant" />
+                }
+              >
+                <X className="size-4" />
+              </DrawerClose>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setRightSidebarOpen(false)}
-              className="size-8"
-              aria-label="Close chat"
-            >
-              <X className="size-4" />
-            </Button>
-          </div>
+            <DrawerDescription className="sr-only">
+              Chat with the AI assistant about stocks and market data
+            </DrawerDescription>
+          </DrawerHeader>
 
           {/* Chat Messages - use native overflow instead of ScrollArea */}
           <div className="flex-1 min-h-0 overflow-y-auto p-4">
@@ -1160,8 +1168,8 @@ export default function DashboardPage() {
               <span>New line</span>
             </div>
           </div>
-        </aside>
-      )}
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
