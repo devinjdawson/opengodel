@@ -1,16 +1,25 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Fragment, useState, useEffect, useRef, useMemo } from "react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, RefreshCw, Search, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, TrendingUp, Heart, GripVertical, Pencil, PanelLeft, Bitcoin } from "lucide-react";
+import { Loader2, RefreshCw, Search, BarChart3, LineChart, PieChart, Table, Settings, Grid, LayoutDashboard, MessageSquare, X, Plus, FolderOpen, History, Bot, User, Send, Mic, Paperclip, TrendingUp, Heart, Bitcoin, PanelLeft } from "lucide-react";
 import { motion, LayoutGroup } from "motion/react";
 import { cn } from "@/lib/utils";
-import { DraggableWrapper } from "@/components/draggable-wrapper";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import {
+  addWidget as addPanelWidget,
+  gridToTree,
+  listEndpoints,
+  removeWidget as removePanelWidget,
+  setGroupSizes,
+  type LayoutNode as PanelNode,
+  type PanelGroupNode,
+} from "@/lib/panel-layout";
 import {
   Drawer,
   DrawerClose,
@@ -118,13 +127,11 @@ export default function DashboardPage() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
-  // Window management
-  const [topZIndex, setTopZIndex] = useState(100);
-  const [windowZIndices, setWindowZIndices] = useState<Record<string, number>>({});
-  const [widgetOrder, setWidgetOrder] = useState<Record<string, string>>({});
+  // Docked panel layout trees, keyed `${template}::${tab}`; persisted so user
+  // resizes survive reloads. When a tab has no override, gridToTree(tab.layout) seeds it.
+  const [treeOverrides, setTreeOverrides] = useState<Record<string, PanelNode>>({});
+  const treeKey = `${activeTemplate}::${activeTab}`;
 
   // Default data provider
   const [dataProvider, setDataProvider] = useState<string>("yfinance");
@@ -148,29 +155,24 @@ export default function DashboardPage() {
     }
   };
 
-  // Load widget order from localStorage
+  // Hydrate persisted panel trees
   useEffect(() => {
-    const saved = localStorage.getItem(`dashboard-order-${activeTemplate}-${activeTab}`);
+    const saved = localStorage.getItem("og-panel-trees");
     if (saved) {
       try {
-        setWidgetOrder(JSON.parse(saved));
+        setTreeOverrides(JSON.parse(saved));
       } catch {
-        // Invalid JSON, use default order
+        // Invalid JSON; fall back to template layouts
       }
     }
-  }, [activeTemplate, activeTab]);
+  }, []);
 
-  // Save widget order to localStorage
-  const saveWidgetOrder = (order: Record<string, string>) => {
-    setWidgetOrder(order);
-    localStorage.setItem(`dashboard-order-${activeTemplate}-${activeTab}`, JSON.stringify(order));
-  };
-
-  const bringWindowToFront = (widgetId: string) => {
-    const newZIndex = topZIndex + 1;
-    setTopZIndex(newZIndex);
-    setWindowZIndices(prev => ({ ...prev, [widgetId]: newZIndex }));
-  };
+  // Persist panel trees
+  useEffect(() => {
+    if (Object.keys(treeOverrides).length > 0) {
+      localStorage.setItem("og-panel-trees", JSON.stringify(treeOverrides));
+    }
+  }, [treeOverrides]);
 
   // Load widgets and templates on mount
   useEffect(() => {
@@ -219,16 +221,6 @@ export default function DashboardPage() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    const observer = new ResizeObserver(entries => {
-      const rect = entries[0]?.contentRect;
-      if (rect) setCanvasSize({ width: rect.width, height: rect.height });
-    });
-    observer.observe(canvasRef.current);
-    return () => observer.disconnect();
-  }, [loading]);
 
   // Auto-refresh heatmap at configured interval
   useEffect(() => {
@@ -413,6 +405,101 @@ export default function DashboardPage() {
     );
   };
 
+  // Active panel tree: persisted override if it matches the tab's widget set,
+  // otherwise derived from the template layout.
+  const activeTree = useMemo<PanelNode | null>(() => {
+    const layoutIds = getTabLayout().map(l => l.i).sort().join("|");
+    const saved = treeOverrides[treeKey];
+    if (saved && listEndpoints(saved).sort().join("|") === layoutIds) {
+      return saved;
+    }
+    return gridToTree(getTabLayout());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [treeOverrides, treeKey, templates, activeTemplate, activeTab]);
+
+  const handleGroupLayout = (path: number[], sizes: Record<string, number>) => {
+    setTreeOverrides(prev => {
+      const base = prev[treeKey] ?? activeTree;
+      if (!base) return prev;
+      return { ...prev, [treeKey]: setGroupSizes(base, path, sizes) };
+    });
+  };
+
+  const renderPanel = (endpoint: string) => {
+    const widget = widgets[endpoint];
+    const state = widget ? widgetStates[endpoint] : null;
+
+    if (!widget || !state) {
+      return (
+        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+          Loading…
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex h-full flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0b0f14]">
+        <div className="flex h-8 flex-shrink-0 items-center gap-2 border-b border-white/10 bg-white/[0.04] px-2">
+          <span className="flex-1 truncate text-xs font-medium text-zinc-200">{widget.name}</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6 text-zinc-400 hover:bg-white/10 hover:text-zinc-100"
+            onClick={() => refreshWidget(endpoint)}
+            aria-label={`Refresh ${widget.name}`}
+          >
+            <RefreshCw className={cn("size-3.5", state.loading && "animate-spin")} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6 text-zinc-400 hover:bg-white/10 hover:text-zinc-100"
+            onClick={() => removeWidgetFromDashboard(endpoint)}
+            aria-label={`Remove ${widget.name}`}
+          >
+            <X className="size-3.5" />
+          </Button>
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col">
+          {renderParamControls(widget, state)}
+          <div className="flex-1 min-h-0 overflow-auto p-2">
+            {renderWidget(widget, state)}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderGroup = (node: PanelGroupNode, path: number[]) => (
+    <ResizablePanelGroup
+      orientation={node.orientation}
+      onLayoutChanged={layout => handleGroupLayout(path, layout)}
+    >
+      {node.children.map((child, i) => {
+        const childPath = [...path, i];
+        const childId = child.kind === "panel" ? child.endpoint : `g-${childPath.join("-")}`;
+        const size = node.sizes?.[childId];
+        return (
+          <Fragment key={childId}>
+            {i > 0 && <ResizableHandle withHandle />}
+            <ResizablePanel
+              id={childId}
+              minSize="12%"
+              defaultSize={size !== undefined ? `${size}%` : undefined}
+            >
+              {child.kind === "panel"
+                ? renderPanel(child.endpoint)
+                : renderGroup(child, childPath)}
+            </ResizablePanel>
+          </Fragment>
+        );
+      })}
+    </ResizablePanelGroup>
+  );
+
+  const renderWorkspace = (tree: PanelNode) =>
+    tree.kind === "panel" ? renderPanel(tree.endpoint) : renderGroup(tree, []);
+
   // Chat functions
   const sendChatMessage = async () => {
     if (!chatInput.trim() || chatLoading) return;
@@ -500,6 +587,12 @@ export default function DashboardPage() {
       };
     }));
 
+    // Split the new panel into the docked tree
+    setTreeOverrides(prev => {
+      const base = prev[treeKey] ?? gridToTree(tab.layout);
+      return { ...prev, [treeKey]: addPanelWidget(base, endpoint) };
+    });
+
     // Initialize widget state
     const params: Record<string, string | number | boolean> = {};
     for (const param of widget.params) {
@@ -522,6 +615,19 @@ export default function DashboardPage() {
   const removeWidgetFromDashboard = (endpoint: string) => {
     const template = getTemplate();
     if (!template) return;
+
+    // Collapse the panel out of the docked tree
+    setTreeOverrides(prev => {
+      const base = prev[treeKey] ?? gridToTree(getTabLayout());
+      const next = removePanelWidget(base, endpoint);
+      const copy = { ...prev };
+      if (next) {
+        copy[treeKey] = next;
+      } else {
+        delete copy[treeKey];
+      }
+      return copy;
+    });
 
     setTemplates(prev => prev.map(t => {
       if (t.name !== activeTemplate) return t;
@@ -1000,9 +1106,9 @@ export default function DashboardPage() {
           )}
         </header>
 
-        {/* Dashboard - Floating Windows */}
-        <div ref={canvasRef} className="flex-1 min-h-0 overflow-hidden relative bg-gray-950">
-          {layout.length === 0 ? (
+        {/* Dashboard - Docked Panel Workspace */}
+        <div className="flex-1 min-h-0 overflow-hidden bg-gray-950 p-2">
+          {layout.length === 0 || !activeTree ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
               <LayoutDashboard className="size-16 mb-4 opacity-30" />
               <p className="text-xl font-semibold">No widgets in this tab</p>
@@ -1015,45 +1121,7 @@ export default function DashboardPage() {
               </Button>
             </div>
           ) : (
-            <>
-              {layout.map((item, idx) => {
-                const widget = widgets[item.i];
-                const state = widget ? widgetStates[item.i] : null;
-
-                if (!widget || !state) {
-                  return null;
-                }
-
-                const zIndex = windowZIndices[item.i] || (10 + idx);
-                const defaultPos = { x: 50 + (idx * 30), y: 50 + (idx * 30) };
-                const defaultSize = { width: 450, height: 350 };
-
-                return (
-                  <DraggableWrapper
-                    key={item.i}
-                    title={widget.name}
-                    defaultPosition={defaultPos}
-                    defaultSize={defaultSize}
-                    zIndex={zIndex}
-                    containerBounds={canvasSize}
-                    onFocus={() => bringWindowToFront(item.i)}
-                    onPositionChange={(pos) => {
-                      // Optional: save position
-                    }}
-                    onSizeChange={(size) => {
-                      // Optional: save size
-                    }}
-                  >
-                    <div className="h-full flex flex-col">
-                      {renderParamControls(widget, state)}
-                      <div className="flex-1 min-h-0 overflow-auto p-2">
-                        {renderWidget(widget, state)}
-                      </div>
-                    </div>
-                  </DraggableWrapper>
-                );
-              })}
-            </>
+            renderWorkspace(activeTree)
           )}
         </div>
       </main>
